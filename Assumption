@@ -1,0 +1,62 @@
+import pandas as pd
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import seaborn as sns
+from statsmodels.stats.stattools import durbin_watson
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# Load the sample data
+df = pd.read_excel("PD_IFRS9_Sample_Data.xlsx")
+
+# Define the independent variables and dependent variable
+X = df[["GDP_Growth_Rate", "Unemployment_Rate"]]
+y = df["PD"]
+
+# Add a constant to the independent variables
+X = sm.add_constant(X)
+
+# Fit the regression model
+model = sm.OLS(y, X).fit()
+
+# Predicted values and residuals
+predicted = model.fittedvalues
+residuals = model.resid
+
+# 1. Linearity Assumption
+plt.figure(figsize=(10, 6))
+sns.regplot(x=predicted, y=y, lowess=True, line_kws={'color': 'red'})
+plt.title("Linearity Check: Predicted vs Actual PD")
+plt.xlabel("Predicted PD")
+plt.ylabel("Actual PD")
+plt.show()
+# Interpretation: The Lowess line should follow the diagonal line for a good linear relationship.
+
+# 2. Independence Assumption (Autocorrelation Check)
+dw_statistic = durbin_watson(residuals)
+print(f"Durbin-Watson Statistic: {dw_statistic:.2f}")
+# Interpretation: A Durbin-Watson value close to 2 indicates no autocorrelation.
+
+# 3. Homoscedasticity Assumption
+plt.figure(figsize=(10, 6))
+sns.residplot(x=predicted, y=residuals, lowess=True, line_kws={'color': 'red'})
+plt.title("Homoscedasticity Check: Residuals vs Predicted PD")
+plt.xlabel("Predicted PD")
+plt.ylabel("Residuals")
+plt.show()
+# Interpretation: The spread of residuals should be even across the range of predicted values.
+
+# 4. No Multicollinearity Assumption
+vif_data = pd.DataFrame()
+vif_data["Feature"] = X.columns
+vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+print(vif_data)
+# Interpretation: VIF values above 5 indicate multicollinearity, which should be addressed.
+
+# 5. Normality of Residuals Assumption
+sm.qqplot(residuals, line='s')
+plt.title("Normality Check: Q-Q Plot of Residuals")
+plt.show()
+# Interpretation: Points should lie along the line for the residuals to be normally distributed.
+
+# 6. No Autocorrelation (Durbin-Watson Check)
+# Already checked in step 2.
