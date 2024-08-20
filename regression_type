@@ -1,0 +1,49 @@
+
+### 1. **Linear Regression**
+   - **Parameters**: Coefficients (β0, β1, β2, ...), Intercept.
+   - **Function Used**: The linear function is `Y = β0 + β1X1 + β2X2 + ... + ε`, where `ε` is the error term.
+   - **Output**: Continuous values.
+   - **Example**: Predicting house prices based on square footage and number of rooms.
+
+### 2. **Logistic Regression**
+   - **Parameters**: Coefficients (β0, β1, β2, ...), Intercept.
+   - **Function Used**: Sigmoid function, `P(Y=1|X) = 1 / (1 + e^-(β0 + β1X1 + β2X2 + ...))`.
+   - **Output**: Probability between 0 and 1, typically classified into 0 or 1 based on a threshold (e.g., 0.5).
+   - **Example**: Predicting whether a customer will buy a product (Yes/No) based on income and age.
+
+### 3. **Ridge Regression**
+   - **Parameters**: Coefficients (β0, β1, β2, ...), Intercept, and Regularization parameter (λ).
+   - **Function Used**: Similar to linear regression but includes a penalty term: `Σ (yi - ŷi)² + λ Σ βj²`.
+   - **Output**: Continuous values with reduced overfitting.
+   - **Example**: Predicting sales where multicollinearity exists among the predictors.
+
+### 4. **Lasso Regression**
+   - **Parameters**: Coefficients (β0, β1, β2, ...), Intercept, and Regularization parameter (λ).
+   - **Function Used**: Similar to linear regression but includes a penalty term: `Σ (yi - ŷi)² + λ Σ |βj|`.
+   - **Output**: Continuous values; some coefficients may shrink to zero, leading to feature selection.
+   - **Example**: Predicting the effect of various marketing channels on revenue where only a few channels are significant.
+
+### 5. **Polynomial Regression**
+   - **Parameters**: Coefficients (β0, β1, β2, ...), Intercept.
+   - **Function Used**: Extends linear regression to include polynomial terms: `Y = β0 + β1X + β2X² + ... + ε`.
+   - **Output**: Continuous values, capturing non-linear relationships.
+   - **Example**: Modeling the growth of a population over time where the growth rate accelerates.
+
+### 6. **Elastic Net Regression**
+   - **Parameters**: Coefficients (β0, β1, β2, ...), Intercept, Regularization parameters (λ1, λ2).
+   - **Function Used**: Combination of Ridge and Lasso penalties: `Σ (yi - ŷi)² + λ1 Σ βj² + λ2 Σ |βj|`.
+   - **Output**: Continuous values, combining feature selection and shrinkage.
+   - **Example**: Predicting disease risk factors in medical data with many correlated variables.
+
+### 7. **Support Vector Regression (SVR)**
+   - **Parameters**: Support vectors, kernel type, regularization parameter (C), epsilon (ε).
+   - **Function Used**: Finds the hyperplane that best fits the data with a margin, often using a non-linear kernel.
+   - **Output**: Continuous values.
+   - **Example**: Predicting stock prices with complex non-linear patterns.
+
+### 8. **Poisson Regression**
+   - **Parameters**: Coefficients (β0, β1, β2, ...), Intercept.
+   - **Function Used**: `log(μ) = β0 + β1X1 + β2X2 + ...`, where `μ` is the expected value of the count.
+   - **Output**: Predicted counts (integer values).
+   - **Example**: Predicting the number of insurance claims based on age and driving history.
+
