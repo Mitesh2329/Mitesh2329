@@ -1,0 +1,62 @@
+import yfinance as yf
+import pandas as pd
+import matplotlib.pyplot as plt
+
+class SwingTrader:
+    def __init__(self, ticker, short_window=40, long_window=100):
+        self.ticker = ticker
+        self.short_window = short_window
+        self.long_window = long_window
+        self.data = None
+        self.signals = None
+
+    def fetch_data(self, start_date, end_date):
+        # Fetch historical data from Yahoo Finance
+        self.data = yf.download(self.ticker, start=start_date, end=end_date)
+        self.data['Date'] = self.data.index
+        self.data.reset_index(drop=True, inplace=True)
+
+    def calculate_moving_averages(self):
+        if self.data is not None:
+            self.data['Short_MA'] = self.data['Close'].rolling(window=self.short_window, min_periods=1).mean()
+            self.data['Long_MA'] = self.data['Close'].rolling(window=self.long_window, min_periods=1).mean()
+
+    def generate_signals(self):
+        if self.data is not None:
+            self.data['Signal'] = 0
+            self.data['Signal'][self.short_window:] = \
+                [1 if self.data['Short_MA'].iloc[i] > self.data['Long_MA'].iloc[i] else 0 for i in range(self.short_window, len(self.data))]
+            self.data['Position'] = self.data['Signal'].diff()
+
+    def plot_signals(self):
+        if self.data is not None:
+            plt.figure(figsize=(12, 6))
+            plt.plot(self.data['Date'], self.data['Close'], label='Close Price', alpha=0.5)
+            plt.plot(self.data['Date'], self.data['Short_MA'], label=f'{self.short_window}-Day Moving Average', alpha=0.75)
+            plt.plot(self.data['Date'], self.data['Long_MA'], label=f'{self.long_window}-Day Moving Average', alpha=0.75)
+
+            plt.plot(self.data[self.data['Position'] == 1]['Date'],
+                     self.data['Short_MA'][self.data['Position'] == 1],
+                     '^', markersize=10, color='g', label='Buy Signal')
+
+            plt.plot(self.data[self.data['Position'] == -1]['Date'],
+                     self.data['Short_MA'][self.data['Position'] == -1],
+                     'v', markersize=10, color='r', label='Sell Signal')
+
+            plt.title(f'Swing Trading Signals for {self.ticker}')
+            plt.xlabel('Date')
+            plt.ylabel('Price')
+            plt.legend()
+            plt.grid()
+            plt.show()
+
+    def execute_trading_strategy(self, start_date, end_date):
+        self.fetch_data(start_date, end_date)
+        self.calculate_moving_averages()
+        self.generate_signals()
+        self.plot_signals()
+
+# Example usage:
+if __name__ == "__main__":
+    trader = SwingTrader('AAPL', short_window=40, long_window=100)
+    trader.execute_trading_strategy('2023-01-01', '2024-01-01')
