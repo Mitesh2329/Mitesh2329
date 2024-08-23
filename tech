@@ -1,0 +1,114 @@
+import yfinance as yf
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+class StockAnalysis:
+    def __init__(self, ticker, short_window=40, long_window=100, rsi_window=14):
+        self.ticker = ticker
+        self.short_window = short_window
+        self.long_window = long_window
+        self.rsi_window = rsi_window
+        self.data = None
+        self.financials = None
+
+    def fetch_data(self, start_date, end_date):
+        # Fetch historical price data
+        self.data = yf.download(self.ticker, start=start_date, end=end_date)
+        self.data['Date'] = self.data.index
+        self.data.reset_index(drop=True, inplace=True)
+
+    def fetch_financials(self):
+        # Fetch financial data (e.g., P/E ratio, book value)
+        stock_info = yf.Ticker(self.ticker).info
+        self.financials = {
+            'P/E Ratio': stock_info.get('forwardEps'),
+            'Book Value': stock_info.get('bookValue')
+        }
+
+    def calculate_indicators(self):
+        if self.data is not None:
+            # Calculate Moving Averages
+            self.data['Short_MA'] = self.data['Close'].rolling(window=self.short_window, min_periods=1).mean()
+            self.data['Long_MA'] = self.data['Close'].rolling(window=self.long_window, min_periods=1).mean()
+            
+            # Calculate RSI
+            delta = self.data['Close'].diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=self.rsi_window).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=self.rsi_window).mean()
+            rs = gain / loss
+            self.data['RSI'] = 100 - (100 / (1 + rs))
+
+    def generate_signals(self):
+        if self.data is not None:
+            # Generate buy signals
+            self.data['Signal'] = 0
+            self.data['Signal'][(self.data['Short_MA'] > self.data['Long_MA']) & (self.data['RSI'] < 30)] = 1
+            self.data['Position'] = self.data['Signal'].diff()
+
+    def get_buy_recommendations(self):
+        if self.data is not None:
+            buy_signals = self.data[self.data['Position'] == 1]
+            return buy_signals[['Date', 'Close']].sort_values(by='Close')
+        return pd.DataFrame()
+
+    def get_fundamental_data(self):
+        if self.financials:
+            return pd.DataFrame([self.financials], index=[self.ticker])
+        return pd.DataFrame()
+
+    def plot_signals(self):
+        if self.data is not None:
+            plt.figure(figsize=(12, 6))
+            plt.plot(self.data['Date'], self.data['Close'], label='Close Price', alpha=0.5)
+            plt.plot(self.data['Date'], self.data['Short_MA'], label=f'{self.short_window}-Day Moving Average', alpha=0.75)
+            plt.plot(self.data['Date'], self.data['Long_MA'], label=f'{self.long_window}-Day Moving Average', alpha=0.75)
+
+            plt.plot(self.data[self.data['Position'] == 1]['Date'],
+                     self.data['Close'][self.data['Position'] == 1],
+                     '^', markersize=10, color='g', label='Buy Signal')
+
+            plt.title(f'Technical Analysis for {self.ticker}')
+            plt.xlabel('Date')
+            plt.ylabel('Price')
+            plt.legend()
+            plt.grid()
+            plt.show()
+
+# Example usage for multiple stocks:
+if __name__ == "__main__":
+    tickers = ['AAPL', 'MSFT', 'NTPC.NS']  # List of tickers to analyze
+    results = []
+
+    for ticker in tickers:
+        sa = StockAnalysis(ticker, short_window=40, long_window=100, rsi_window=14)
+        sa.fetch_data('2023-01-01', '2024-01-01')
+        sa.fetch_financials()
+        sa.calculate_indicators()
+        sa.generate_signals()
+        buy_recommendations = sa.get_buy_recommendations()
+        fundamental_data = sa.get_fundamental_data()
+        
+        if not buy_recommendations.empty:
+            latest_recommendation = buy_recommendations.iloc[0]
+            results.append({
+                'Ticker': ticker,
+                'Date': latest_recommendation['Date'],
+                'Price': latest_recommendation['Close'],
+                'P/E Ratio': fundamental_data['P/E Ratio'].values[0] if not fundamental_data.empty else None,
+                'Book Value': fundamental_data['Book Value'].values[0] if not fundamental_data.empty else None
+            })
+
+    # Sort by price (or any other criteria like P/E Ratio if needed)
+    results_df = pd.DataFrame(results).sort_values(by='Price')
+    print("Buy Recommendations and Fundamental Data:")
+    print(results_df)
+
+    # Plot for the first stock in the results for visualization
+    if not results_df.empty:
+        first_ticker = results_df.iloc[0]['Ticker']
+        sa = StockAnalysis(first_ticker, short_window=40, long_window=100, rsi_window=14)
+        sa.fetch_data('2023-01-01', '2024-01-01')
+        sa.calculate_indicators()
+        sa.generate_signals()
+        sa.plot_signals()
