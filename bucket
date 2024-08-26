@@ -1,0 +1,58 @@
+import numpy as np
+import pandas as pd
+
+# Input Data: Define your time buckets, midpoints, and initial parameters.
+# The time buckets are used to represent different time periods.
+buckets = ["1Y to 1.5Y", "1.5Y to 2Y", "2Y to 3Y", "3Y to 4Y", "4Y to 5Y", 
+           "5Y to 6Y", "6Y to 7Y", "7Y to 8Y", "8Y to 9Y", "9Y to 10Y"]
+
+# Midpoints for each time bucket (in years)
+midpoints = np.array([1.25, 1.75, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5])
+
+# Decay rate (lambda) - Controls the rate at which the percentage declines over time.
+# Higher lambda means faster decay.
+decay_rate = 0.3
+
+# Initial percentage allocated to the overnight bucket (given in the problem)
+overnight_percentage = 12.5
+
+# Total percentage available for remaining buckets
+remaining_percentage = 100 - overnight_percentage
+
+# Step 1: Calculate the decay weight for each midpoint.
+# The decay weight is an exponential function of time, which represents how quickly the percentage decreases.
+decay_weights = np.exp(-decay_rate * midpoints)
+
+# Step 2: Calculate the raw percentage for each bucket.
+# This is done by normalizing the decay weights so that they sum to the remaining percentage (87.5%).
+raw_percentages = (decay_weights / np.sum(decay_weights)) * remaining_percentage
+
+# Step 3: Calculate the sum-product of the initial raw percentages and midpoints.
+# This is used to check if the constraint is met.
+sum_product = np.sum(raw_percentages * midpoints)
+
+# Step 4: Adjust the percentages if the sum-product exceeds the threshold (4.5%).
+# If needed, scale down the percentages proportionally to fit within the constraint.
+if sum_product > 4.5:
+    scaling_factor = 4.5 / sum_product
+    adjusted_percentages = raw_percentages * scaling_factor
+else:
+    adjusted_percentages = raw_percentages
+
+# Step 5: Create a DataFrame to present the results.
+# This makes the output clear and easy to analyze.
+results_df = pd.DataFrame({
+    "Bucket": buckets,
+    "Midpoint (Years)": midpoints,
+    "Adjusted Percentage (%)": adjusted_percentages,
+    "Percentage * Midpoint": adjusted_percentages * midpoints
+})
+
+# Step 6: Calculate the total sum-product to verify it meets the constraint.
+total_sum_product = np.sum(results_df["Percentage * Midpoint"])
+
+# Display the results.
+print("Exponential Decay Allocation Results:")
+print(results_df)
+print(f"\nTotal Sum-Product: {total_sum_product:.4f} (Should be <= 4.5%)")
+
