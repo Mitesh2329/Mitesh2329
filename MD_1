@@ -1,0 +1,34 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import norm, skew
+from sklearn.impute import SimpleImputer
+
+# Load your data
+df = pd.read_csv('your_data_file.csv')
+
+# Basic Info and Summary Statistics
+print(df.info())  # Check data types and missing values
+print(df.describe())  # Summary statistics
+
+# Univariate Analysis: Distribution of each variable
+df.hist(bins=20, figsize=(20, 15))
+plt.show()
+
+# Extreme Value Analysis: Detect outliers using z-scores
+for column in df.columns:
+    if df[column].dtype in ['float64', 'int64']:
+        df['zscore'] = np.abs((df[column] - df[column].mean()) / df[column].std())
+        outliers = df[df['zscore'] > 3]
+        print(f"Outliers in {column}: {len(outliers)}")
+
+# Missing Value Treatment
+imputer = SimpleImputer(strategy='mean')  # You can change strategy as needed
+df_imputed = pd.DataFrame(imputer.fit_transform(df), columns=df.columns)
+
+# Graphical Representations
+plt.figure(figsize=(12, 8))
+sns.heatmap(df_imputed.corr(), annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.show()
