@@ -1,0 +1,48 @@
+import numpy as np
+import pandas as pd
+from lifelines import CoxPHFitter
+
+# Define the time buckets and their corresponding midpoints (in years)
+buckets = ["1Y to 1.5Y", "1.5Y to 2Y", "2Y to 3Y", "3Y to 4Y", "4Y to 5Y", 
+           "5Y to 6Y", "6Y to 7Y", "7Y to 8Y", "8Y to 9Y", "9Y to 10Y"]
+midpoints = np.array([1.25, 1.75, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5])
+
+# Generate artificial 'time' and 'event' data (necessary for Cox PH Model)
+# We assume all 'events' occur (i.e., all buckets see withdrawals)
+df = pd.DataFrame({
+    'time': midpoints,      # Midpoints as the 'time' variable
+    'event': np.ones_like(midpoints),  # Event occurrence (1 for all buckets)
+    'midpoints': midpoints   # Midpoints as a covariate
+})
+
+# Initialize the Cox Proportional Hazard model
+cox_model = CoxPHFitter()
+
+# Fit the model using the data
+cox_model.fit(df, duration_col='time', event_col='event')
+
+# Print the summary (model coefficients)
+cox_model.print_summary()
+
+# Predict the cumulative hazard for each bucket
+df['cumulative_hazard'] = cox_model.predict_cumulative_hazard(df)
+
+# Calculate the survival function (probability of deposit survival)
+df['survival_function'] = cox_model.predict_survival_function(df).iloc[:, -1]
+
+# Allocate percentages based on the survival function (normalized)
+df['allocated_percentage'] = df['survival_function'] / df['survival_function'].sum() * (100 - 12.5)
+
+# Ensure the total percentages match the remaining percentage (87.5%)
+df['adjusted_percentage'] = df['allocated_percentage'] / df['allocated_percentage'].sum() * 87.5
+
+# Calculate the sum-product for the adjusted percentages
+df['percentage_midpoint'] = df['adjusted_percentage'] * df['midpoints']
+
+# Check if the sum-product meets the constraint (< 4.5%)
+total_sum_product = df['percentage_midpoint'].sum()
+
+# Display the results
+print("Cox PH Model Allocation Results:")
+print(df[['time', 'midpoints', 'cumulative_hazard', 'survival_function', 'adjusted_percentage', 'percentage_midpoint']])
+print(f"\nTotal Sum-Product: {total_sum_product:.4f} (Should be <= 4.5%)")
