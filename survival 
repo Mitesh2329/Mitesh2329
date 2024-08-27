@@ -25,10 +25,12 @@ cox_model.fit(df, duration_col='time', event_col='event')
 cox_model.print_summary()
 
 # Predict the cumulative hazard for each bucket
-df['cumulative_hazard'] = cox_model.predict_cumulative_hazard(df)
+cumulative_hazard = cox_model.predict_cumulative_hazard(df)
+df['cumulative_hazard'] = cumulative_hazard.iloc[:, 0]  # Extracting the relevant column
 
 # Calculate the survival function (probability of deposit survival)
-df['survival_function'] = cox_model.predict_survival_function(df).iloc[:, -1]
+survival_function = cox_model.predict_survival_function(df)
+df['survival_function'] = survival_function.iloc[:, -1]  # Extracting the last column
 
 # Allocate percentages based on the survival function (normalized)
 df['allocated_percentage'] = df['survival_function'] / df['survival_function'].sum() * (100 - 12.5)
