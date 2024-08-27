@@ -2,19 +2,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import norm, skew
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, PowerTransformer
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, classification_report, roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from statsmodels.stats.outliers_influence import variance_inflation_factor
-from sklearn.exceptions import ConvergenceWarning
 import warnings
 
-warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
+warnings.filterwarnings(action='ignore', category=UserWarning, module='statsmodels')
 
 # Generate Sample Data
 data = {
@@ -42,15 +40,19 @@ df.hist(bins=20, figsize=(20, 15))
 plt.show()
 
 # Extreme Value Analysis: Detect outliers using z-scores
-for column in df.columns:
-    if df[column].dtype in ['float64', 'int64']:
-        df['zscore'] = np.abs((df[column] - df[column].mean()) / df[column].std())
-        outliers = df[df['zscore'] > 3]
-        print(f"Outliers in {column}: {len(outliers)}")
+for column in df.select_dtypes(include=[np.number]).columns:
+    df['zscore'] = np.abs((df[column] - df[column].mean()) / df[column].std())
+    outliers = df[df['zscore'] > 3]
+    print(f"Outliers in {column}: {len(outliers)}")
+    df = df[df['zscore'] <= 3]  # Remove outliers
 
 # Missing Value Treatment
-imputer = SimpleImputer(strategy='mean')  # You can change strategy as needed
-df_imputed = pd.DataFrame(imputer.fit_transform(df), columns=df.columns)
+imputer = SimpleImputer(strategy='mean')  # Impute missing values with mean
+df_imputed = pd.DataFrame(imputer.fit_transform(df.select_dtypes(include=[np.number])), 
+                          columns=df.select_dtypes(include=[np.number]).columns)
+
+# Add non-numeric columns back
+df_imputed['quarter_date'] = df['quarter_date']
 
 # Graphical Representations
 plt.figure(figsize=(12, 8))
@@ -62,9 +64,10 @@ plt.show()
 print(df_imputed.corr())
 
 # Variable Transformation: Apply log transformation to skewed variables
-skewed_cols = df_imputed.skew().index[df_imputed.skew() > 1]
+skewed_cols = df_imputed.select_dtypes(include=[np.number]).apply(lambda x: x.skew()).index
 for col in skewed_cols:
-    df_imputed[col] = np.log1p(df_imputed[col])
+    if df_imputed[col].skew() > 1:
+        df_imputed[col] = np.log1p(df_imputed[col])
 
 # Variable Creation: Create interaction terms or polynomial terms
 df_imputed['GDP*UER'] = df_imputed['GDP'] * df_imputed['UER']
@@ -73,10 +76,10 @@ df_imputed['GDP*UER'] = df_imputed['GDP'] * df_imputed['UER']
 df_imputed['GDP_bin'] = pd.cut(df_imputed['GDP'], bins=4, labels=False)
 
 # Multicollinearity Check: Calculate Variance Inflation Factor (VIF)
-X = df_imputed.drop(columns=['default_rate'])
+X = df_imputed.drop(columns=['default_rate', 'quarter_date'])
 vif_data = pd.DataFrame()
 vif_data['feature'] = X.columns
-vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
 print(vif_data)
 
 # Variable Selection: Select variables with VIF < 5
