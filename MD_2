@@ -1,0 +1,42 @@
+from sklearn.preprocessing import StandardScaler, PowerTransformer
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score, classification_report
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# Multivariate Analysis: Correlation Matrix
+print(df_imputed.corr())
+
+# Variable Transformation: Apply log transformation to skewed variables
+skewed_cols = df_imputed.skew().index[df_imputed.skew() > 1]
+for col in skewed_cols:
+    df_imputed[col] = np.log1p(df_imputed[col])
+
+# Variable Creation: Create interaction terms or polynomial terms
+df_imputed['GDP*UER'] = df_imputed['GDP'] * df_imputed['UER']
+
+# Binning: Binning of continuous variables
+df_imputed['GDP_bin'] = pd.cut(df_imputed['GDP'], bins=4, labels=False)
+
+# Multicollinearity Check: Calculate Variance Inflation Factor (VIF)
+X = df_imputed.drop(columns=['default_rate'])
+vif_data = pd.DataFrame()
+vif_data['feature'] = X.columns
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+print(vif_data)
+
+# Variable Selection: Select variables with VIF < 5
+selected_vars = vif_data[vif_data['VIF'] < 5]['feature']
+X_selected = df_imputed[selected_vars]
+
+# Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X_selected, df_imputed['default_rate'], test_size=0.2, random_state=42)
+
+# Technique Selection: Logistic Regression (as an example)
+model = LogisticRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+# Performance Metrics
+print(f"ROC AUC Score: {roc_auc_score(y_test, y_pred)}")
+print(classification_report(y_test, y_pred))
