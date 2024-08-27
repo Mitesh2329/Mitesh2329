@@ -1,0 +1,33 @@
+from sklearn.metrics import roc_curve, auc, precision_recall_curve
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+
+# Performance Analysis: ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, model.predict_proba(X_test)[:,1])
+roc_auc = auc(fpr, tpr)
+plt.plot(fpr, tpr, color='blue', label=f'ROC curve (area = {roc_auc:0.2f})')
+plt.plot([0, 1], [0, 1], color='red', linestyle='--')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC)')
+plt.legend()
+plt.show()
+
+# Multiple Model Comparison: Compare with other models (e.g., Random Forest)
+from sklearn.ensemble import RandomForestClassifier
+rf_model = RandomForestClassifier()
+rf_model.fit(X_train, y_train)
+rf_y_pred = rf_model.predict(X_test)
+print(f"Random Forest ROC AUC Score: {roc_auc_score(y_test, rf_y_pred)}")
+
+# Out-of-Sample Validation: Cross-validation with StratifiedKFold
+cv = StratifiedKFold(n_splits=5)
+scores = cross_val_score(model, X_selected, df_imputed['default_rate'], cv=cv, scoring='roc_auc')
+print(f'Cross-Validation ROC AUC Scores: {scores}')
+print(f'Mean ROC AUC: {scores.mean()}')
+
+# Back Testing: Evaluate model on earlier data (2018-2019)
+df_backtest = df_imputed[df_imputed['quarter_date'].between('2018-01-01', '2019-12-31')]
+X_backtest = df_backtest[selected_vars]
+y_backtest = df_backtest['default_rate']
+backtest_pred = model.predict(X_backtest)
+print(f"Backtest ROC AUC Score: {roc_auc_score(y_backtest, backtest_pred)}")
