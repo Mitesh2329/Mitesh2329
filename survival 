@@ -7,8 +7,8 @@ buckets = ["1Y to 1.5Y", "1.5Y to 2Y", "2Y to 3Y", "3Y to 4Y", "4Y to 5Y",
            "5Y to 6Y", "6Y to 7Y", "7Y to 8Y", "8Y to 9Y", "9Y to 10Y"]
 midpoints = np.array([1.25, 1.75, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5])
 
-# Generate artificial 'time' and 'event' data (necessary for Cox PH Model)
-# We assume all 'events' occur (i.e., all buckets see withdrawals)
+# Simulate event data (necessary for Cox PH Model)
+# If needed, we can slightly modify some event timings to avoid NaN issues
 df = pd.DataFrame({
     'time': midpoints,      # Midpoints as the 'time' variable
     'event': np.ones_like(midpoints),  # Event occurrence (1 for all buckets)
@@ -21,16 +21,13 @@ cox_model = CoxPHFitter()
 # Fit the model using the data
 cox_model.fit(df, duration_col='time', event_col='event')
 
-# Print the summary (model coefficients)
-cox_model.print_summary()
-
 # Predict the cumulative hazard for each bucket
 cumulative_hazard = cox_model.predict_cumulative_hazard(df)
-df['cumulative_hazard'] = cumulative_hazard.iloc[:, 0]  # Extracting the relevant column
+df['cumulative_hazard'] = cumulative_hazard.iloc[:, 0]  # Extract the first column
 
 # Calculate the survival function (probability of deposit survival)
 survival_function = cox_model.predict_survival_function(df)
-df['survival_function'] = survival_function.iloc[:, -1]  # Extracting the last column
+df['survival_function'] = survival_function.iloc[:, -1]  # Extract the last column
 
 # Allocate percentages based on the survival function (normalized)
 df['allocated_percentage'] = df['survival_function'] / df['survival_function'].sum() * (100 - 12.5)
