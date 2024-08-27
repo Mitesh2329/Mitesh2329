@@ -1,0 +1,126 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import norm, skew
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, PowerTransformer
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score, classification_report, roc_curve, auc
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from sklearn.exceptions import ConvergenceWarning
+import warnings
+
+warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
+
+# Generate Sample Data
+data = {
+    'quarter_date': pd.date_range(start='2018-01-01', periods=100, freq='M'),
+    'default_rate': np.random.uniform(0.01, 0.1, 100),
+    'GDP': np.random.uniform(4.5, 6.5, 100),
+    'UER': np.random.uniform(4.0, 5.5, 100),
+    'CPI': np.random.uniform(2.0, 3.5, 100),
+    'HPI': np.random.uniform(180, 250, 100)
+}
+df = pd.DataFrame(data)
+
+# Save Sample Data to CSV
+df.to_csv('sample_ifrs9_data.csv', index=False)
+
+# Load the Data
+df = pd.read_csv('sample_ifrs9_data.csv', parse_dates=['quarter_date'])
+
+# Basic Info and Summary Statistics
+print(df.info())  # Check data types and missing values
+print(df.describe())  # Summary statistics
+
+# Univariate Analysis: Distribution of each variable
+df.hist(bins=20, figsize=(20, 15))
+plt.show()
+
+# Extreme Value Analysis: Detect outliers using z-scores
+for column in df.columns:
+    if df[column].dtype in ['float64', 'int64']:
+        df['zscore'] = np.abs((df[column] - df[column].mean()) / df[column].std())
+        outliers = df[df['zscore'] > 3]
+        print(f"Outliers in {column}: {len(outliers)}")
+
+# Missing Value Treatment
+imputer = SimpleImputer(strategy='mean')  # You can change strategy as needed
+df_imputed = pd.DataFrame(imputer.fit_transform(df), columns=df.columns)
+
+# Graphical Representations
+plt.figure(figsize=(12, 8))
+sns.heatmap(df_imputed.corr(), annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.show()
+
+# Multivariate Analysis: Correlation Matrix
+print(df_imputed.corr())
+
+# Variable Transformation: Apply log transformation to skewed variables
+skewed_cols = df_imputed.skew().index[df_imputed.skew() > 1]
+for col in skewed_cols:
+    df_imputed[col] = np.log1p(df_imputed[col])
+
+# Variable Creation: Create interaction terms or polynomial terms
+df_imputed['GDP*UER'] = df_imputed['GDP'] * df_imputed['UER']
+
+# Binning: Binning of continuous variables
+df_imputed['GDP_bin'] = pd.cut(df_imputed['GDP'], bins=4, labels=False)
+
+# Multicollinearity Check: Calculate Variance Inflation Factor (VIF)
+X = df_imputed.drop(columns=['default_rate'])
+vif_data = pd.DataFrame()
+vif_data['feature'] = X.columns
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+print(vif_data)
+
+# Variable Selection: Select variables with VIF < 5
+selected_vars = vif_data[vif_data['VIF'] < 5]['feature']
+X_selected = df_imputed[selected_vars]
+
+# Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X_selected, df_imputed['default_rate'], test_size=0.2, random_state=42)
+
+# Technique Selection: Logistic Regression (as an example)
+model = LogisticRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+# Performance Metrics
+print(f"ROC AUC Score: {roc_auc_score(y_test, y_pred)}")
+print(classification_report(y_test, y_pred))
+
+# Performance Analysis: ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, model.predict_proba(X_test)[:,1])
+roc_auc = auc(fpr, tpr)
+plt.plot(fpr, tpr, color='blue', label=f'ROC curve (area = {roc_auc:0.2f})')
+plt.plot([0, 1], [0, 1], color='red', linestyle='--')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC)')
+plt.legend()
+plt.show()
+
+# Multiple Model Comparison: Compare with Random Forest
+rf_model = RandomForestClassifier()
+rf_model.fit(X_train, y_train)
+rf_y_pred = rf_model.predict(X_test)
+print(f"Random Forest ROC AUC Score: {roc_auc_score(y_test, rf_y_pred)}")
+
+# Out-of-Sample Validation: Cross-validation with StratifiedKFold
+cv = StratifiedKFold(n_splits=5)
+scores = cross_val_score(model, X_selected, df_imputed['default_rate'], cv=cv, scoring='roc_auc')
+print(f'Cross-Validation ROC AUC Scores: {scores}')
+print(f'Mean ROC AUC: {scores.mean()}')
+
+# Back Testing: Evaluate model on earlier data (2018-2019)
+df_backtest = df_imputed[df_imputed['quarter_date'].between('2018-01-01', '2019-12-31')]
+X_backtest = df_backtest[selected_vars]
+y_backtest = df_backtest['default_rate']
+backtest_pred = model.predict(X_backtest)
+print(f"Backtest ROC AUC Score: {roc_auc_score(y_backtest, backtest_pred)}")
