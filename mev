@@ -1,0 +1,70 @@
+Here’s a detailed layout for your Proof of Concept (PoC) document on using multivariate regression with macroeconomic variables (MEV) in non-maturing deposit (NMD) models. This document includes both technical explanations and layman's terms.
+
+---
+
+## **Title: Proof of Concept for Using Multivariate Regression with Macroeconomic Variables in Non-Maturing Deposit Models**
+
+### **1. Introduction**
+In banking, understanding the behavior of non-maturing deposits (NMDs) is crucial for effective Asset-Liability Management (ALM). NMDs are accounts with no fixed maturity, such as savings accounts, which makes modeling their behavior complex. To enhance the accuracy of these models, we can incorporate macroeconomic variables (MEV) using multivariate regression. This approach allows us to predict end-of-period (EOP) balances (Y) more accurately by considering external economic factors (X).
+
+### **2. What is Multivariate Regression?**
+**Technical Explanation:**  
+Multivariate regression is a statistical technique used to model the relationship between one dependent variable (Y) and two or more independent variables (X1, X2, … Xn). It extends simple linear regression by incorporating multiple predictors, making it ideal for analyzing how different factors collectively influence an outcome.
+
+**Layman’s Explanation:**  
+Imagine predicting your monthly expenses. If you only consider your income, that’s like simple regression. But if you also consider rent, groceries, and utilities, you’re using multivariate regression to get a more accurate estimate of your expenses.
+
+### **3. Application in Non-Maturing Deposit Models**
+**Technical Explanation:**  
+In NMD models, we aim to forecast the EOP balance (Y). However, NMD balances are influenced by various macroeconomic factors such as GDP growth, unemployment rates, and interest rates. By using multivariate regression, we incorporate these MEVs as independent variables (X) into our model, enhancing the prediction accuracy for the EOP balance.
+
+**Layman’s Explanation:**  
+Let’s say you want to predict how much people will keep in their savings accounts. You might think about their income, but what if the economy is struggling or interest rates drop? These factors also affect how much people save. By considering all these factors together, you can make better predictions.
+
+### **4. How to Implement Multivariate Regression**
+1. **Data Collection:**  
+   Gather historical EOP balances for NMDs and relevant MEVs such as GDP, interest rates, and unemployment.
+
+2. **Model Building:**  
+   Use statistical software (e.g., Python, R) to run a multivariate regression analysis. Here, the EOP balance is your dependent variable (Y), and the MEVs are your independent variables (X).
+
+3. **Model Evaluation:**  
+   Evaluate the model using statistical metrics like p-values, R-squared, and F-statistics to ensure it accurately represents the relationship between Y and X.
+
+**Example:**  
+If we observe that NMD balances tend to decrease when unemployment rises, we’ll include unemployment as an X variable. The regression model might look like this:
+\[ \text{EOP Balance} = \beta_0 + \beta_1(\text{GDP Growth}) + \beta_2(\text{Unemployment}) + \beta_3(\text{Interest Rate}) + \epsilon \]
+
+### **5. Benefits of Using Multivariate Regression**
+**Technical Explanation:**  
+Incorporating MEVs into NMD models provides a holistic view of factors influencing deposit behavior, leading to better forecasts and more informed decision-making in ALM.
+
+**Layman’s Explanation:**  
+By considering all relevant economic factors, we make more accurate predictions, helping banks manage their funds better and reducing financial risks.
+
+### **6. Selecting Macroeconomic Variables (MEVs)**
+**Technical Explanation:**  
+Choose MEVs based on their economic relevance, data availability, and statistical significance. A good MEV should have a clear economic relationship with the EOP balance and consistently significant p-values in regression analysis.
+
+**Layman’s Explanation:**  
+Pick economic factors that truly impact savings, like how much the economy is growing, how many people are working, and how high interest rates are. These factors should show strong effects in the analysis.
+
+### **7. Understanding p-value and R-squared**
+1. **p-value:**  
+   - **Technical Explanation:** Indicates the significance of each independent variable. A low p-value (typically < 0.05) suggests that the variable is statistically significant.
+   - **Layman’s Explanation:** A low p-value means that the factor (e.g., unemployment) really affects savings.
+
+2. **R-squared:**  
+   - **Technical Explanation:** Represents the proportion of variance in the dependent variable explained by the independent variables. A higher R-squared indicates a better fit.
+   - **Layman’s Explanation:** A high R-squared means our model does a good job of predicting savings based on the factors we chose.
+
+3. **Acceptable Ranges:**  
+   - **p-value:** Typically, p < 0.05 is considered significant.
+   - **R-squared:** Values closer to 1 indicate a strong model. However, context and model complexity should guide acceptance.
+
+### **8. Conclusion**
+Using multivariate regression with macroeconomic variables allows for a more nuanced and accurate prediction of NMD balances. By understanding the influence of various economic factors, banks can better manage their assets and liabilities, leading to improved financial stability and decision-making.
+
+---
+
+This document provides a clear framework for discussing and implementing multivariate regression in NMD models, with both technical depth and clarity for broader audiences.
