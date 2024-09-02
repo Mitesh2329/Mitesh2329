@@ -1,0 +1,76 @@
+Decay analysis is used to model the rate at which certain elements decrease over time, such as deposits in banking, to help with bucketing for liquidity risk management or other financial assessments. Below is the logic, formula, and steps for calculating decay rate and how it can be applied in bucketing.
+
+### Decay Analysis Logic
+
+1. **Understanding Decay**: Decay analysis focuses on understanding how quickly certain balances (e.g., deposits) decline over time. This decline is usually modeled using an exponential decay function, where the amount decreases at a rate proportional to its current value.
+
+2. **Purpose of Bucketing**: Bucketing involves categorizing the decayed balances into different time periods (e.g., 1-3 months, 3-6 months, etc.) to assess liquidity needs, forecast future cash flows, or manage risk.
+
+3. **Decay Rate**: The decay rate (\(\lambda\)) represents the rate at which the balance decreases over time. It’s a key parameter in the exponential decay function.
+
+### Exponential Decay Formula
+
+The basic formula for exponential decay is:
+
+\[
+N(t) = N_0 \cdot e^{-\lambda t}
+\]
+
+Where:
+- \(N(t)\) = Remaining balance at time \(t\)
+- \(N_0\) = Initial balance at \(t = 0\)
+- \(\lambda\) = Decay rate (a positive constant)
+- \(t\) = Time elapsed
+
+### Steps to Calculate Decay Rate
+
+1. **Data Collection**:
+   - Obtain historical balance data over a specific period (e.g., monthly balances over several years).
+   - Identify the time intervals and corresponding balance values.
+
+2. **Estimate Decay Rate**:
+   - Using the historical data, plot the balance over time.
+   - Fit an exponential decay curve to the data using a regression approach.
+   - The slope of the regression line in the log-transformed data will give you \(-\lambda\), the negative decay rate.
+
+   Alternatively, if you already have the balance at different times, you can directly calculate \(\lambda\) using:
+
+   \[
+   \lambda = -\frac{\ln\left(\frac{N(t)}{N_0}\right)}{t}
+   \]
+
+   For multiple time points, use the average \(\lambda\) derived from each time interval.
+
+3. **Apply the Decay Rate**:
+   - Once \(\lambda\) is determined, use it to project the decay of future balances and bucket the balances into different time periods.
+   - Calculate the decayed balance for each bucket (e.g., 0-3 months, 3-6 months) using the formula \(N(t)\).
+
+### Example
+
+Suppose you have the following data:
+
+- Initial balance \(N_0\) at \(t = 0\) is ₹100,000.
+- Balance after 1 year (t = 1) is ₹70,000.
+
+To calculate the decay rate (\(\lambda\)):
+
+\[
+\lambda = -\frac{\ln\left(\frac{70,000}{100,000}\right)}{1} = 0.3567
+\]
+
+This means the balance decays at a rate of approximately 35.67% per year.
+
+### Application in Bucketing
+
+Once you have \(\lambda\), you can distribute the balances into buckets. For example:
+
+1. **0-3 months**: Calculate the balance remaining after 3 months using \(t = 0.25\).
+2. **3-6 months**: Calculate the balance remaining after 6 months using \(t = 0.5\), and subtract the amount calculated for the 0-3 months bucket.
+3. Continue this process for other buckets.
+
+### Considerations
+
+- **Re-estimation**: Regularly re-estimate the decay rate as market conditions change.
+- **Multiple Factors**: Consider using multiple decay rates or other statistical models if you have different segments or factors affecting the decay.
+
+This method provides a systematic approach to decay analysis, enabling more accurate bucketing for risk management or liquidity assessments.
