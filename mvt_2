@@ -1,0 +1,62 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score, roc_curve
+
+# 1. Generate a dummy dataset for classification model validation
+# We use scikit-learn's make_classification to create a binary classification dataset.
+X, y = make_classification(n_samples=1000, n_features=5, n_classes=2, random_state=42)
+
+# 2. Split the dataset into training and testing sets
+# We use a 70-30 split, with 70% for training and 30% for testing.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 3. Train a Logistic Regression model on the training data
+# Logistic Regression is commonly used in credit risk modeling.
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# 4. Predict probabilities for the test set
+# We use predicted probabilities for calculating metrics like ROC-AUC and Gini Index.
+y_pred_prob = model.predict_proba(X_test)[:, 1]  # We take the probability of the positive class
+
+# 5. ROC-AUC (Receiver Operating Characteristic - Area Under the Curve)
+# Purpose: Measures the model's ability to distinguish between the positive and negative classes.
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob)  # Calculate ROC curve data
+roc_auc = roc_auc_score(y_test, y_pred_prob)  # Calculate the AUC (Area Under the Curve)
+
+# Plot the ROC curve
+plt.figure()
+plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC)')
+plt.legend(loc="lower right")
+plt.show()
+
+print(f'ROC-AUC: {roc_auc:.2f}')
+
+# 6. Gini Index
+# Purpose: A measure of inequality among values, commonly used to assess model performance in credit scoring.
+gini_index = 2 * roc_auc - 1  # Gini Index is derived from the ROC-AUC score
+print(f'Gini Index: {gini_index:.2f}')
+
+# 7. Accuracy Ratio
+# Purpose: Compares the discriminatory power of the model against a perfect model.
+accuracy_ratio = gini_index / 1.0  # Accuracy Ratio is the Gini Index scaled to a perfect model
+print(f'Accuracy Ratio: {accuracy_ratio:.2f}')
+
+# 8. Herfindahl-Hirschman Index (HHI)
+# Purpose: Measures the concentration of risk or market share, often used to assess portfolio risk.
+# Assume `shares` is a list or array of portfolio weights or market shares
+shares = np.array([0.3, 0.25, 0.15, 0.1, 0.2])  # Example portfolio weights
+
+# Calculate HHI
+hhi = np.sum(np.square(shares)) * 10000  # HHI is typically scaled by 10,000
+print(f'Herfindahl-Hirschman Index (HHI): {hhi:.2f}')
