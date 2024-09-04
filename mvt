@@ -1,0 +1,113 @@
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.api import OLS, add_constant
+from scipy import stats
+import statsmodels.api as sm
+
+# 1. Generate a dummy dataset for model validation
+# We use scikit-learn's make_regression to create a regression dataset.
+X, y = make_regression(n_samples=100, n_features=5, noise=0.1, random_state=42)
+df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(1, 6)])
+df['target'] = y
+
+# Splitting the dataset into training and testing sets.
+X_train, X_test, y_train, y_test = train_test_split(df.drop('target', axis=1), df['target'], test_size=0.2, random_state=42)
+
+# 2. Linearity Test
+# We check for linear relationships between independent variables and the dependent variable.
+sns.pairplot(df)
+plt.show()
+
+# Explanation: Pair plots show scatter plots of feature pairs and their relationship with the target variable. 
+# If the relationship appears linear, it supports the assumption of linearity in regression models.
+
+# 3. Multicollinearity Test using VIF (Variance Inflation Factor)
+# VIF tests for multicollinearity, where high VIF values (typically > 5 or 10) indicate high correlation among predictors.
+X_with_const = add_constant(X_train)
+vif_data = pd.DataFrame()
+vif_data["VIF"] = [variance_inflation_factor(X_with_const.values, i) for i in range(X_with_const.shape[1])]
+vif_data["Feature"] = X_with_const.columns
+print(vif_data)
+
+# Explanation: A VIF value above 5 indicates that the corresponding feature is highly correlated with other features, 
+# which can lead to instability in the regression coefficients.
+
+# 4. Homoscedasticity Test
+# We check if the residuals have constant variance (homoscedasticity) using a residual plot.
+model = LinearRegression().fit(X_train, y_train)
+predictions = model.predict(X_train)
+residuals = y_train - predictions
+
+plt.scatter(predictions, residuals)
+plt.hlines(y=0, xmin=min(predictions), xmax=max(predictions), color='red')
+plt.xlabel('Predicted Values')
+plt.ylabel('Residuals')
+plt.show()
+
+# Explanation: In the plot, if the residuals are randomly scattered around the horizontal axis (y=0) without any pattern, 
+# it indicates homoscedasticity. A funnel shape suggests heteroscedasticity, violating model assumptions.
+
+# 5. Normality of Residuals
+# We check if the residuals are normally distributed using a Q-Q plot.
+sm.qqplot(residuals, line='s')
+plt.show()
+
+# Explanation: In a Q-Q plot, if the points fall approximately along a straight line, the residuals are normally distributed, 
+# which is an assumption in many regression models.
+
+# 6. Autocorrelation Test (Durbin-Watson Test)
+# The Durbin-Watson statistic tests for the presence of autocorrelation in the residuals.
+durbin_watson = sm.stats.durbin_watson(residuals)
+print(f'Durbin-Watson statistic: {durbin_watson}')
+
+# Explanation: The Durbin-Watson statistic ranges from 0 to 4. A value near 2 suggests no autocorrelation, 
+# while values closer to 0 or 4 suggest positive or negative autocorrelation, respectively.
+
+# 7. Model Performance Metrics (R-squared and RMSE)
+# These metrics evaluate the goodness-of-fit of the model.
+y_pred_test = model.predict(X_test)
+r2 = r2_score(y_test, y_pred_test)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
+
+print(f'R-squared: {r2}')
+print(f'RMSE: {rmse}')
+
+# Explanation: R-squared measures the proportion of variance in the dependent variable explained by the independent variables. 
+# RMSE provides the standard deviation of the residuals. Both metrics are used to assess model performance.
+
+# 8. Statistical Significance of Coefficients
+# We use t-tests to check if the regression coefficients are statistically significant.
+X_train_const = add_constant(X_train)
+model_ols = OLS(y_train, X_train_const).fit()
+print(model_ols.summary())
+
+# Explanation: The p-values in the summary table help to determine if the coefficients are significantly different from zero.
+# Typically, a p-value less than 0.05 indicates that the feature is significantly contributing to the model.
+
+# 9. Outlier Detection (Cook’s Distance)
+# We detect influential data points using Cook's distance.
+influence = model_ols.get_influence()
+(c, p) = influence.cooks_distance
+plt.stem(np.arange(len(c)), c, markerfmt=",")
+plt.show()
+
+# Explanation: Cook's distance identifies influential data points. If any data point has a Cook's distance greater than 1, 
+# it might be an influential point affecting the model significantly.
+
+# 10. Collinearity Diagnosis (Eigenvalue Condition Index)
+# Eigenvalue analysis helps in diagnosing multicollinearity.
+eigenvalues = np.linalg.eigvals(X_with_const.T @ X_with_const)
+condition_index = np.sqrt(max(eigenvalues) / eigenvalues)
+print(f'Condition Index: {condition_index}')
+
+# Explanation: A high condition index (typically > 30) indicates potential multicollinearity issues. 
+# This diagnostic is often used in conjunction with VIF.
+
+# This script provides a comprehensive set of model validation tests essential for regulatory compliance and model auditing in banking and finance.
