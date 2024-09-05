@@ -1,0 +1,147 @@
+import pandas as pd
+import numpy as np
+import scipy.stats as stats
+from sklearn.metrics import roc_auc_score, roc_curve
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Sample Data - Replace with actual DataFrame
+data = {
+    'band': list(range(1, 15)),
+    'no_of_accounts': np.random.randint(100, 1000, 14),
+    'no_of_defaults': np.random.randint(0, 100, 14),
+    'no_of_non_defaults': np.random.randint(0, 900, 14)
+}
+df = pd.DataFrame(data)
+
+# Set Seaborn style for better visualizations
+sns.set(style='whitegrid')
+
+# 1. Chi-Square Test (for Stability)
+def chi_square_test(df):
+    contingency_table = np.array([df['no_of_defaults'], df['no_of_non_defaults']])
+    chi2, p, dof, ex = stats.chi2_contingency(contingency_table)
+    return chi2, p
+
+chi2, p_val = chi_square_test(df)
+print(f'Chi-Square Test: chi2={chi2}, p={p_val}')
+
+# Visualize Defaults vs Non-Defaults by Band
+plt.figure(figsize=(10, 6))
+sns.barplot(x='band', y='no_of_defaults', data=df, color='red', label='Defaults')
+sns.barplot(x='band', y='no_of_non_defaults', data=df, color='green', label='Non-Defaults')
+plt.title('Defaults vs Non-Defaults by Band')
+plt.xlabel('Band')
+plt.ylabel('Number of Accounts')
+plt.legend()
+plt.show()
+
+# 2. PSI (Population Stability Index)
+def psi(expected, actual, bins=10):
+    expected_percents = np.histogram(expected, bins=bins)[0] / len(expected)
+    actual_percents = np.histogram(actual, bins=bins)[0] / len(actual)
+    psi_values = (expected_percents - actual_percents) * np.log(expected_percents / actual_percents)
+    return np.sum(psi_values)
+
+expected_dist = df['no_of_accounts'][:7]  # Hypothetical expected data
+actual_dist = df['no_of_accounts'][7:]
+psi_value = psi(expected_dist, actual_dist)
+print(f'Population Stability Index (PSI): {psi_value}')
+
+# PSI Visualization
+plt.figure(figsize=(10, 6))
+sns.histplot(expected_dist, bins=7, color='blue', label='Expected Distribution')
+sns.histplot(actual_dist, bins=7, color='orange', label='Actual Distribution')
+plt.title('PSI: Expected vs Actual Distribution')
+plt.legend()
+plt.show()
+
+# 3. Kolmogorov-Smirnov Test (for Stability)
+ks_stat, ks_p_value = stats.ks_2samp(df['no_of_defaults'], df['no_of_non_defaults'])
+print(f'Kolmogorov-Smirnov Test: KS Statistic={ks_stat}, p={ks_p_value}')
+
+# 4. ANOVA (for comparing means across bands)
+anova_result = stats.f_oneway(df['no_of_defaults'], df['no_of_non_defaults'])
+print(f'ANOVA: F-statistic={anova_result.statistic}, p={anova_result.pvalue}')
+
+# 5. Weight of Evidence (WOE) and Information Value (IV)
+def calculate_woe_iv(df):
+    df['default_rate'] = df['no_of_defaults'] / df['no_of_accounts']
+    df['non_default_rate'] = df['no_of_non_defaults'] / df['no_of_accounts']
+    df['woe'] = np.log(df['non_default_rate'] / df['default_rate'])
+    df['iv'] = (df['non_default_rate'] - df['default_rate']) * df['woe']
+    iv_total = df['iv'].sum()
+    return df[['band', 'woe', 'iv']], iv_total
+
+woe_iv, iv_total = calculate_woe_iv(df)
+print(f'WOE and IV:\n{woe_iv}')
+print(f'Total Information Value: {iv_total}')
+
+# WOE Plot
+plt.figure(figsize=(10, 6))
+sns.barplot(x='band', y='woe', data=woe_iv, palette='coolwarm')
+plt.title('Weight of Evidence (WOE) by Band')
+plt.xlabel('Band')
+plt.ylabel('WOE')
+plt.show()
+
+# 6. Gini Coefficient and ROC (Screening Capacity)
+y_true = np.where(df['no_of_defaults'] > 0, 1, 0)  # Binary outcome: 1 for default, 0 for non-default
+y_scores = df['no_of_defaults'] / df['no_of_accounts']  # Proxy score
+roc_auc = roc_auc_score(y_true, y_scores)
+fpr, tpr, _ = roc_curve(y_true, y_scores)
+gini = 2 * roc_auc - 1
+
+print(f'ROC AUC: {roc_auc}, Gini Coefficient: {gini}')
+
+# ROC Curve Visualization
+plt.figure(figsize=(10, 6))
+plt.plot(fpr, tpr, color='blue', label=f'ROC curve (AUC = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], color='grey', linestyle='--')
+plt.title('ROC Curve')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.legend(loc="lower right")
+plt.show()
+
+# 7. Correlation Matrix (Pearson, Spearman)
+pearson_corr = df[['no_of_defaults', 'no_of_non_defaults']].corr(method='pearson')
+spearman_corr = df[['no_of_defaults', 'no_of_non_defaults']].corr(method='spearman')
+print(f'Pearson Correlation:\n{pearson_corr}')
+print(f'Spearman Correlation:\n{spearman_corr}')
+
+# Correlation Heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(pearson_corr, annot=True, cmap='coolwarm', cbar=True)
+plt.title('Pearson Correlation Heatmap')
+plt.show()
+
+# 8. Frequency Analysis and Monotonicity
+def frequency_analysis(df):
+    df['default_rate'] = df['no_of_defaults'] / df['no_of_accounts']
+    monotonicity = df['default_rate'].is_monotonic_increasing
+    return monotonicity
+
+monotonic = frequency_analysis(df)
+print(f'Monotonicity of Default Rates: {monotonic}')
+
+# Frequency Plot
+plt.figure(figsize=(10, 6))
+sns.lineplot(x='band', y='default_rate', data=df, marker='o', color='purple')
+plt.title('Default Rate Monotonicity by Band')
+plt.xlabel('Band')
+plt.ylabel('Default Rate')
+plt.show()
+
+# 9. Concentration - Kurtosis and Skewness
+kurtosis = df['no_of_defaults'].kurtosis()
+skewness = df['no_of_defaults'].skew()
+print(f'Kurtosis: {kurtosis}, Skewness: {skewness}')
+
+# Distribution of Defaults Visualization (Kurtosis and Skewness)
+plt.figure(figsize=(10, 6))
+sns.histplot(df['no_of_defaults'], kde=True, color='red')
+plt.title('Distribution of Defaults with Skewness and Kurtosis')
+plt.xlabel('Number of Defaults')
+plt.ylabel('Frequency')
+plt.show()
