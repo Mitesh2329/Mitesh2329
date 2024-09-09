@@ -1,0 +1,235 @@
+Python Presentation Framework
+
+#### **1. Introduction to Python**
+
+**What is Python?**
+- Python is a high-level programming language that's easy to learn and use. It's popular for its simplicity and readability.
+
+**Why Learn Python?**
+- **Ease of Learning:** Simple syntax and easy to understand.
+- **Versatility:** Used for web development, data analysis, automation, and more.
+- **Community Support:** Large community and lots of resources available.
+
+---
+
+#### **2. Python Features**
+
+**Key Features:**
+- **Readable Code:** Clear and concise syntax.
+- **Versatile Libraries:** Numerous libraries for different tasks.
+- **Interactive:** Can be used in a command-line interface for quick experiments.
+
+**Basic Syntax Examples:**
+
+**Printing Text:**
+```python
+print("Hello, World!")
+```
+
+**Variables:**
+```python
+name = "Alice"  # String
+age = 30        # Integer
+height = 5.7    # Float
+```
+
+**Basic Operations:**
+```python
+sum = 10 + 5  # Addition
+print(sum)    # Outputs: 15
+```
+
+**Conditional Statements:**
+```python
+if age > 18:
+    print("Adult")
+else:
+    print("Not an adult")
+```
+
+**Loops:**
+```python
+for i in range(3):
+    print(i)  # Outputs: 0, 1, 2
+```
+
+**Functions:**
+```python
+def greet(name):
+    return "Hello, " + name
+
+print(greet("Alice"))  # Outputs: Hello, Alice
+```
+
+---
+
+#### **3. Python in Banking**
+
+**a. Fraud Detection:**
+```python
+import pandas as pd
+from sklearn.ensemble import IsolationForest
+
+# Sample data
+transactions = pd.DataFrame({
+    'amount': [100, 200, 300, 5000, 250, 3000],
+    'transaction_type': ['purchase', 'purchase', 'withdrawal', 'purchase', 'withdrawal', 'withdrawal']
+})
+
+# Convert categorical data to numeric
+transactions['transaction_type'] = transactions['transaction_type'].astype('category').cat.codes
+
+# Train Isolation Forest model for anomaly detection
+model = IsolationForest(contamination=0.2)
+transactions['anomaly'] = model.fit_predict(transactions[['amount', 'transaction_type']])
+
+print(transactions)
+```
+
+**b. Credit Scoring:**
+```python
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Sample data
+data = pd.DataFrame({
+    'age': [25, 45, 35, 50, 23],
+    'income': [50000, 100000, 75000, 120000, 45000],
+    'credit_score': [700, 650, 680, 720, 690],
+    'approved': [1, 0, 1, 1, 0]  # 1: Approved, 0: Denied
+})
+
+# Features and target variable
+X = data[['age', 'income', 'credit_score']]
+y = data['approved']
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train the model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Make predictions
+predictions = model.predict(X_test)
+accuracy = accuracy_score(y_test, predictions)
+
+print(f"Accuracy: {accuracy}")
+```
+
+---
+
+#### **4. Python for Statistics**
+
+**a. Basic Statistics:**
+```python
+import numpy as np
+import pandas as pd
+
+# Sample data
+data = pd.DataFrame({
+    'value': [10, 20, 30, 40, 50]
+})
+
+# Calculate mean and standard deviation
+mean_value = data['value'].mean()
+std_dev = data['value'].std()
+
+print(f"Mean: {mean_value}")
+print(f"Standard Deviation: {std_dev}")
+```
+
+**b. Linear Regression:**
+```python
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+
+# Sample data
+data = pd.DataFrame({
+    'X': [1, 2, 3, 4, 5],
+    'Y': [2, 4, 6, 8, 10]
+})
+
+# Features and target variable
+X = data[['X']]
+Y = data['Y']
+
+# Create and train the model
+model = LinearRegression()
+model.fit(X, Y)
+
+# Make predictions
+predictions = model.predict(X)
+
+# Plot results
+plt.scatter(X, Y, color='blue')
+plt.plot(X, predictions, color='red')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Linear Regression')
+plt.show()
+```
+
+---
+
+#### **5. Getting Started with Python**
+
+**a. Installing Python:**
+- **Direct Installation:** Download Python from the [official website](https://www.python.org/downloads/) and follow the installation instructions.
+- **Using Anaconda:** Anaconda simplifies package management and deployment. Download Anaconda from the [official website](https://www.anaconda.com/products/distribution) and follow the setup instructions.
+
+**b. Setting Up Your Environment:**
+- **Direct Installation:** After installation, you can run Python scripts by opening the terminal or command prompt and typing `python script.py`.
+- **Using Anaconda:** Open Anaconda Navigator or use `conda` commands in the terminal to manage your Python environment.
+
+**c. Running Python Scripts:**
+- **Save your script:** Create a file named `example.py`.
+- **Run your script:** Open your terminal or command prompt and type `python example.py`.
+
+---
+
+#### **6. Advanced Topics**
+
+**a. Functions and Modules:**
+- **Functions:** Reusable blocks of code.
+- **Modules:** Files containing Python code to be imported and used in other scripts.
+
+**Example of Using Functions and Modules:**
+
+**Define a Module (mymodule.py):**
+```python
+def add(x, y):
+    return x + y
+
+def subtract(x, y):
+    return x - y
+```
+
+**Use the Module (main.py):**
+```python
+import mymodule
+
+print(mymodule.add(5, 3))        # Outputs: 8
+print(mymodule.subtract(5, 3))   # Outputs: 2
+```
+
+**b. Unit Testing:**
+- **Purpose:** Ensure that individual units of code work as expected.
+- **Example:**
+```python
+import unittest
+
+def add(x, y):
+    return x + y
+
+class TestMathFunctions(unittest.TestCase):
+    def test_add(self):
+        self.assertEqual(add(1, 2), 3)
+        self.assertEqual(add(-1, 1), 0)
+
+if __name__ == '__main__':
+    unittest.main()
+```
