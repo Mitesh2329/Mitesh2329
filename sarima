@@ -1,0 +1,77 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import pmdarima as pm
+
+# Simulated data
+np.random.seed(42)
+df = pd.DataFrame({
+    'Scenario': np.repeat(range(1, 15), 24),  # 14 scenarios, 24 months each
+    'Month': list(range(1, 25)) * 14,
+    'Monthly_Balance': np.random.uniform(50000, 150000, 14*24),  # Random balances
+    'Interest_Rate': np.random.uniform(1.5, 6.5, 14*24),  # Simulated interest rates
+    'Inflation': np.random.uniform(2.0, 7.0, 14*24)  # Simulated inflation rates
+})
+
+# Filter data for Scenario 1
+scenario_1_data = df[df['Scenario'] == 1].sort_values(by='Month')
+
+# Extract time series and exogenous variables
+monthly_balance = scenario_1_data['Monthly_Balance']
+exog = scenario_1_data[['Interest_Rate', 'Inflation']]
+
+# Plot the historical monthly balance
+plt.figure(figsize=(10, 6))
+plt.plot(scenario_1_data['Month'], monthly_balance, label='Monthly Balance')
+plt.title('Monthly Balance for Scenario 1')
+plt.xlabel('Month')
+plt.ylabel('Balance')
+plt.legend()
+plt.show()
+
+# Fit SARIMAX model with exogenous variables (Interest Rate, Inflation)
+sarimax_model = pm.auto_arima(monthly_balance, exogenous=exog,
+                              start_p=1, start_q=1, 
+                              max_p=3, max_q=3, 
+                              d=1, 
+                              seasonal=True, m=12, 
+                              start_P=1, start_Q=1, 
+                              max_P=2, max_Q=2, 
+                              D=1, 
+                              trace=True, 
+                              error_action='ignore', 
+                              suppress_warnings=True, 
+                              stepwise=True)
+
+# Print model summary
+print(sarimax_model.summary())
+
+# Forecast the next 12 months of monthly balances with confidence intervals
+n_periods = 12
+future_exog = pd.DataFrame({
+    'Interest_Rate': np.random.uniform(1.5, 6.5, n_periods),  # Forecasted interest rates
+    'Inflation': np.random.uniform(2.0, 7.0, n_periods)  # Forecasted inflation rates
+})
+
+forecast, conf_int = sarimax_model.predict(n_periods=n_periods, exogenous=future_exog, return_conf_int=True)
+
+# Create a new dataframe to display the forecasted values and confidence intervals
+forecast_df = pd.DataFrame({
+    'Month': np.arange(scenario_1_data['Month'].max() + 1, scenario_1_data['Month'].max() + 1 + n_periods),
+    'Forecast': forecast,
+    'Lower CI': conf_int[:, 0],
+    'Upper CI': conf_int[:, 1]
+})
+
+print(forecast_df)
+
+# Plot the forecast
+plt.figure(figsize=(10, 6))
+plt.plot(scenario_1_data['Month'], monthly_balance, label='Historical Balance')
+plt.plot(forecast_df['Month'], forecast_df['Forecast'], label='Forecasted Balance', color='green')
+plt.fill_between(forecast_df['Month'], forecast_df['Lower CI'], forecast_df['Upper CI'], color='k', alpha=.15)
+plt.title('SARIMAX Forecast for Monthly Balance')
+plt.xlabel('Month')
+plt.ylabel('Balance')
+plt.legend()
+plt.show()
