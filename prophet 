@@ -1,0 +1,17 @@
+# Prophet Model
+prophet_df = df.reset_index()[['date', 'balance']]
+prophet_df.columns = ['ds', 'y']
+prophet_model = Prophet()
+prophet_model.fit(prophet_df)
+future = prophet_model.make_future_dataframe(periods=len(test), freq='M')
+forecast = prophet_model.predict(future)
+
+# Extract predictions for the test period
+prophet_pred = forecast.loc[train_size:, 'yhat'].values
+
+# Convert Prophet predictions to numpy array and reshape for scaling
+if prophet_pred.size > 0:  # Check if there are predictions
+    prophet_pred_np = np.array(prophet_pred).reshape(-1, 1)
+    prophet_pred = scaler.inverse_transform(prophet_pred_np)
+else:
+    prophet_pred = np.empty_like(test['balance'])  # Default to empty array if no predictions
