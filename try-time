@@ -1,0 +1,45 @@
+# Run this block to install the required packages
+!pip install pandas matplotlib statsmodels
+
+# Import necessary libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from datetime import datetime
+
+# Assuming you have a CSV file with 'scenario', 'balance', and 'date' columns
+# Replace the file path with your actual file location or data source
+data = pd.DataFrame({
+    'scenario': ['A', 'B', 'C'] * 500,
+    'balance': [50000, 52000, 51500] * 500,
+    'date': ['31-10-2019', '30-11-2019', '31-12-2019'] * 500
+})
+
+# Convert 'date' to datetime format
+data['date'] = pd.to_datetime(data['date'], format='%d-%m-%Y')
+
+# Set 'date' as the index for time series analysis
+data.set_index('date', inplace=True)
+
+# Take the average of balances by date to get a unified time series (optional step)
+balance_data = data.groupby('date')['balance'].mean()
+
+# Plot the original data
+balance_data.plot(title="Balance Data over Time", figsize=(10,6))
+plt.show()
+
+# Fit ARIMA model (you can tweak the order (p,d,q) for better performance)
+model = ARIMA(balance_data, order=(5, 1, 0))  # p=5, d=1 (for difference), q=0
+model_fit = model.fit()
+
+# Forecast for the next 12 months (adjust steps as needed)
+forecast = model_fit.forecast(steps=12)
+
+# Display the forecasted values
+print(forecast)
+
+# Plot the forecast along with historical data
+balance_data.plot(label='Original Data', figsize=(10,6))
+forecast.plot(label='Forecast for 2025', linestyle='--', color='red')
+plt.legend()
+plt.show()
