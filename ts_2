@@ -1,0 +1,67 @@
+# Install necessary packages
+!pip install pandas matplotlib statsmodels
+
+# Import necessary libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from datetime import datetime
+import numpy as np
+
+# Assuming you have a CSV file with 'scenario', 'balance', and 'date' columns
+# Replace this with your actual data
+data = pd.DataFrame({
+    'scenario': ['A', 'B', 'C'] * 500,
+    'balance': [50000, 52000, 51500] * 500,
+    'date': ['31-10-2019', '30-11-2019', '31-12-2019'] * 500
+})
+
+# Convert 'date' to datetime format
+data['date'] = pd.to_datetime(data['date'], format='%d-%m-%Y')
+
+# Set 'date' as the index for time series analysis
+data.set_index('date', inplace=True)
+
+# Take the average of balances by date to get a unified time series
+balance_data = data.groupby('date')['balance'].mean()
+
+# Function to find the best ARIMA parameters using grid search
+def evaluate_arima_model(data, arima_order):
+    model = ARIMA(data, order=arima_order)
+    model_fit = model.fit()
+    return model_fit.aic  # Return AIC for model comparison
+
+# Grid search for ARIMA parameters
+p_values = range(0, 6)
+d_values = range(0, 2)
+q_values = range(0, 6)
+
+best_score, best_cfg = float("inf"), None
+for p in p_values:
+    for d in d_values:
+        for q in q_values:
+            try:
+                aic = evaluate_arima_model(balance_data, (p, d, q))
+                if aic < best_score:
+                    best_score, best_cfg = aic, (p, d, q)
+                print(f'ARIMA{(p,d,q)} AIC={aic}')
+            except:
+                continue
+
+print(f'Best ARIMA model: {best_cfg} with AIC={best_score}')
+
+# Fit the best ARIMA model
+model = ARIMA(balance_data, order=best_cfg)
+model_fit = model.fit()
+
+# Forecast for the next 12 months
+forecast = model_fit.forecast(steps=12)
+
+# Display the forecasted values
+print(forecast)
+
+# Plot the forecast along with historical data
+balance_data.plot(label='Original Data', figsize=(10,6))
+forecast.plot(label='Forecast for 2025', linestyle='--', color='red')
+plt.legend()
+plt.show()
