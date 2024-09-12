@@ -42,13 +42,19 @@ train, test = df[:train_size], df[train_size:]
 hw_model = ExponentialSmoothing(train['scaled_balance'], trend='add', seasonal='add', seasonal_periods=12)
 hw_fit = hw_model.fit()
 hw_pred = hw_fit.forecast(len(test))
-hw_pred = scaler.inverse_transform(hw_pred.reshape(-1, 1))
+
+# Convert Holt-Winters predictions to numpy array for scaling
+hw_pred_np = np.array(hw_pred).reshape(-1, 1)
+hw_pred = scaler.inverse_transform(hw_pred_np)
 
 # ARIMA Model
 arima_model = ARIMA(train['scaled_balance'], order=(5, 1, 0))
 arima_fit = arima_model.fit()
 arima_pred = arima_fit.forecast(steps=len(test))
-arima_pred = scaler.inverse_transform(arima_pred.reshape(-1, 1))
+
+# Convert ARIMA predictions to numpy array for scaling
+arima_pred_np = np.array(arima_pred).reshape(-1, 1)
+arima_pred = scaler.inverse_transform(arima_pred_np)
 
 # Prophet Model
 prophet_df = df.reset_index()[['date', 'balance']]
@@ -58,7 +64,10 @@ prophet_model.fit(prophet_df)
 future = prophet_model.make_future_dataframe(periods=len(test), freq='M')
 forecast = prophet_model.predict(future)
 prophet_pred = forecast.loc[train_size:, 'yhat'].values
-prophet_pred = np.array(prophet_pred).reshape(-1, 1)
+
+# Convert Prophet predictions to numpy array for scaling
+prophet_pred_np = np.array(prophet_pred).reshape(-1, 1)
+prophet_pred = scaler.inverse_transform(prophet_pred_np)
 
 # Evaluate Models
 def evaluate_model(predictions, actuals):
