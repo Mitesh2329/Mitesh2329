@@ -1,0 +1,148 @@
+# Install advanced packages
+!pip install pandas matplotlib seaborn scikit-learn tensorflow prophet
+
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from prophet import Prophet
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+
+# Set seaborn style for visualizations
+sns.set(style="whitegrid")
+
+# ----------------------------
+# Data Generation (Simulating Non-Maturing Deposits Data)
+# ----------------------------
+
+np.random.seed(42)  # For reproducibility
+
+# Parameters for data generation
+num_scenarios = 14
+entries_per_scenario = 46
+dates = pd.date_range(start='2019-01-01', end='2022-12-31', freq='M')  # Monthly data
+total_entries = num_scenarios * entries_per_scenario
+
+# Generate balance values using random distribution
+balance_max = 9.02e+12
+balance_min = 9.1e+09
+balance_median = 6.25e+11
+
+balances = np.random.uniform(balance_min, balance_max, total_entries)
+
+# Assign scenarios and repeat dates
+scenarios = np.tile(np.arange(1, num_scenarios+1), entries_per_scenario)
+scenario_dates = np.repeat(dates, num_scenarios)
+
+# Create DataFrame
+data = pd.DataFrame({
+    'scenario': scenarios[:total_entries],
+    'balance': balances[:total_entries],
+    'date': scenario_dates[:total_entries]
+})
+
+# Convert 'date' to datetime format
+data['date'] = pd.to_datetime(data['date'], format='%Y-%m-%d')
+
+# Set 'date' as the index for time series analysis
+data.set_index('date', inplace=True)
+
+# -----------------------------------------
+# Prophet Model for Advanced Time Series Forecasting
+# -----------------------------------------
+
+# Prepare data for Prophet
+prophet_data = data.groupby('date')['balance'].mean().reset_index()
+prophet_data.columns = ['ds', 'y']  # Prophet expects these column names
+
+# Initialize and fit Prophet model
+prophet_model = Prophet(yearly_seasonality=True, daily_seasonality=False, weekly_seasonality=False)
+prophet_model.fit(prophet_data)
+
+# Forecast for the next 12 months
+future_dates = prophet_model.make_future_dataframe(periods=12, freq='M')
+forecast = prophet_model.predict(future_dates)
+
+# Plot forecast
+fig = prophet_model.plot(forecast)
+plt.title('Prophet Model Forecast')
+plt.xlabel('Date')
+plt.ylabel('Balance')
+plt.show()
+
+# Plot forecast components (trend and seasonality)
+fig2 = prophet_model.plot_components(forecast)
+plt.show()
+
+# ---------------------------------------
+# LSTM Model for Time Series Prediction
+# ---------------------------------------
+
+# Prepare the data for LSTM
+balance_data = data.groupby('date')['balance'].mean()
+
+# Scale the data for LSTM
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(balance_data.values.reshape(-1,1))
+
+# Create sequences (X: inputs, y: output)
+def create_sequences(data, time_steps=12):
+    X, y = [], []
+    for i in range(len(data) - time_steps):
+        X.append(data[i:i+time_steps, 0])
+        y.append(data[i + time_steps, 0])
+    return np.array(X), np.array(y)
+
+time_steps = 12
+X, y = create_sequences(scaled_data, time_steps)
+
+# Split into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+
+# Reshape inputs for LSTM
+X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
+X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
+
+# Build LSTM model
+lstm_model = Sequential()
+lstm_model.add(LSTM(units=50, return_sequences=True, input_shape=(X_train.shape[1], 1)))
+lstm_model.add(Dropout(0.2))
+lstm_model.add(LSTM(units=50))
+lstm_model.add(Dropout(0.2))
+lstm_model.add(Dense(units=1))
+
+# Compile the model
+lstm_model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the LSTM model
+lstm_model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test), verbose=1)
+
+# Make predictions
+lstm_predictions = lstm_model.predict(X_test)
+lstm_predictions = scaler.inverse_transform(lstm_predictions)
+
+# Calculate RMSE for LSTM
+lstm_rmse = np.sqrt(mean_squared_error(y_test, scaler.inverse_transform(y_test.reshape(-1,1))))
+print(f'LSTM RMSE: {lstm_rmse}')
+
+# Plot LSTM predictions vs actual
+plt.figure(figsize=(10,6))
+plt.plot(balance_data.index[-len(lstm_predictions):], scaler.inverse_transform(y_test.reshape(-1, 1)), label='Actual Balance')
+plt.plot(balance_data.index[-len(lstm_predictions):], lstm_predictions, label='Predicted Balance', color='red')
+plt.title('LSTM Model - Actual vs Predicted')
+plt.xlabel('Date')
+plt.ylabel('Balance')
+plt.legend()
+plt.show()
+
+# -----------------------------------------
+# Evaluation of both models and conclusion
+# -----------------------------------------
+
+# Display RMSE from LSTM
+print(f"Root Mean Squared Error for LSTM model: {lstm_rmse}")
