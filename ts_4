@@ -1,0 +1,118 @@
+# Required Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from statsmodels.tsa.arima.model import ARIMA
+from prophet import Prophet
+
+# Generate Synthetic Data
+np.random.seed(42)
+date_range = pd.date_range(start='2019-01-01', end='2022-12-31', freq='M')
+num_scenarios = 14
+entries_per_scenario = 46
+total_entries = len(date_range) * num_scenarios
+
+data = {
+    'date': np.tile(date_range, num_scenarios),
+    'scenario': np.repeat(range(1, num_scenarios + 1), len(date_range)),
+    'balance': np.concatenate([
+        np.random.normal(loc=6.25e11, scale=2e11, size=len(date_range)) for _ in range(num_scenarios)
+    ])
+}
+
+df = pd.DataFrame(data)
+
+# Preprocessing
+df['date'] = pd.to_datetime(df['date'])
+df.set_index('date', inplace=True)
+df.sort_index(inplace=True)
+
+# Scaling Data
+scaler = MinMaxScaler()
+df['scaled_balance'] = scaler.fit_transform(df[['balance']])
+
+# Train-Test Split
+train_size = int(len(df) * 0.8)
+train, test = df[:train_size], df[train_size:]
+
+# Holt-Winters Exponential Smoothing
+hw_model = ExponentialSmoothing(train['scaled_balance'], trend='add', seasonal='add', seasonal_periods=12)
+hw_fit = hw_model.fit()
+hw_pred = hw_fit.forecast(len(test))
+hw_pred = scaler.inverse_transform(hw_pred.reshape(-1, 1))
+
+# ARIMA Model
+arima_model = ARIMA(train['scaled_balance'], order=(5, 1, 0))
+arima_fit = arima_model.fit()
+arima_pred = arima_fit.forecast(steps=len(test))
+arima_pred = scaler.inverse_transform(arima_pred.reshape(-1, 1))
+
+# Prophet Model
+prophet_df = df.reset_index()[['date', 'balance']]
+prophet_df.columns = ['ds', 'y']
+prophet_model = Prophet()
+prophet_model.fit(prophet_df)
+future = prophet_model.make_future_dataframe(periods=len(test), freq='M')
+forecast = prophet_model.predict(future)
+prophet_pred = forecast.loc[train_size:, 'yhat'].values
+prophet_pred = np.array(prophet_pred).reshape(-1, 1)
+
+# Evaluate Models
+def evaluate_model(predictions, actuals):
+    mse = mean_squared_error(actuals, predictions)
+    rmse = np.sqrt(mse)
+    return rmse
+
+hw_rmse = evaluate_model(hw_pred, test['balance'].values)
+arima_rmse = evaluate_model(arima_pred, test['balance'].values)
+prophet_rmse = evaluate_model(prophet_pred, test['balance'].values)
+
+print(f'Holt-Winters RMSE: {hw_rmse}')
+print(f'ARIMA RMSE: {arima_rmse}')
+print(f'Prophet RMSE: {prophet_rmse}')
+
+# Visualization
+plt.figure(figsize=(14, 7))
+
+# Actual vs Predicted for Holt-Winters
+plt.subplot(3, 1, 1)
+plt.plot(df.index, df['balance'], label='Actual')
+plt.plot(test.index, hw_pred, label='Holt-Winters Prediction', color='red')
+plt.title('Holt-Winters Forecast')
+plt.legend()
+
+# Actual vs Predicted for ARIMA
+plt.subplot(3, 1, 2)
+plt.plot(df.index, df['balance'], label='Actual')
+plt.plot(test.index, arima_pred, label='ARIMA Prediction', color='green')
+plt.title('ARIMA Forecast')
+plt.legend()
+
+# Actual vs Predicted for Prophet
+plt.subplot(3, 1, 3)
+plt.plot(df.index, df['balance'], label='Actual')
+plt.plot(test.index, prophet_pred, label='Prophet Prediction', color='orange')
+plt.title('Prophet Forecast')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+# Future Prediction
+future_dates = pd.date_range(start=df.index[-1] + pd.DateOffset(months=1), periods=12, freq='M')
+future_df = pd.DataFrame({'ds': future_dates})
+future_forecast = prophet_model.predict(future_df)
+future_balances = future_forecast['yhat'].values
+
+# Visualization for Future Forecast
+plt.figure(figsize=(10, 5))
+plt.plot(df.index, df['balance'], label='Historical Data')
+plt.plot(future_dates, future_balances, label='Future Forecast', color='purple', linestyle='--')
+plt.title('Future Balance Forecast')
+plt.xlabel('Date')
+plt.ylabel('Balance')
+plt.legend()
+plt.show()
