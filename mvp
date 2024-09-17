@@ -1,0 +1,124 @@
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import roc_auc_score, roc_curve, accuracy_score
+from scipy.stats import ks_2samp
+
+# Load the dataset (assuming it's in a DataFrame called 'df')
+# Dataset contains columns: 'Score_Band', 'No_Of_Accounts', 'No_of_Defaults', 'No_of_Non_Defaults'
+
+# Step 1: Exploratory Data Analysis (EDA)
+# Basic overview of data
+print(df.head())  # View first 5 rows
+print(df.info())  # Check data types and missing values
+print(df.describe())  # Descriptive statistics for numeric columns
+
+# Visualize the distribution of Score_Band
+plt.figure(figsize=(10, 6))
+sns.histplot(df['Score_Band'], bins=20, kde=True)
+plt.title('Distribution of Score Band')
+plt.xlabel('Score Band')
+plt.ylabel('Frequency')
+plt.show()
+
+# Analyze correlation matrix (useful to see correlations between numerical variables)
+plt.figure(figsize=(8, 6))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Correlation Matrix')
+plt.show()
+
+# Step 2: Data Preparation
+# Add a binary 'Default' column based on 'No_of_Defaults' and 'No_of_Non_Defaults'
+df['Default'] = np.where(df['No_of_Defaults'] > 0, 1, 0)  # 1 for Default, 0 for Non-Default
+
+# Split the data into train and test sets
+X = df[['Score_Band', 'No_Of_Accounts']]  # Features
+y = df['Default']  # Target
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Step 3: Model Training (XGBoost or Gradient Boosting Classifier)
+# For simplicity, we'll use GradientBoostingClassifier (an alternative to XGBoost)
+from sklearn.ensemble import GradientBoostingClassifier
+model = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
+model.fit(X_train, y_train)
+
+# Step 4: Model Predictions
+y_pred_train = model.predict(X_train)
+y_pred_test = model.predict(X_test)
+y_pred_prob_test = model.predict_proba(X_test)[:, 1]  # Predicted probabilities for class 1 (default)
+
+# Step 5: Model Validation Metrics
+
+# 1. Accuracy Score
+train_accuracy = accuracy_score(y_train, y_pred_train)
+test_accuracy = accuracy_score(y_test, y_pred_test)
+print(f'Train Accuracy: {train_accuracy:.2f}')
+print(f'Test Accuracy: {test_accuracy:.2f}')
+
+# 2. ROC-AUC Score
+auc_score = roc_auc_score(y_test, y_pred_prob_test)
+print(f'ROC-AUC Score: {auc_score:.2f}')
+
+# 3. KS Statistic (Kolmogorov-Smirnov)
+# Calculate KS Statistic by comparing CDFs of default and non-default probabilities
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob_test)
+ks_statistic = max(tpr - fpr)
+print(f'KS Statistic: {ks_statistic:.2f}')
+
+# Alternatively, we can use ks_2samp directly (less commonly used but another approach):
+default_probs = y_pred_prob_test[y_test == 1]
+non_default_probs = y_pred_prob_test[y_test == 0]
+ks_stat, p_value = ks_2samp(default_probs, non_default_probs)
+print(f'KS Statistic (alternative method): {ks_stat:.2f}, p-value: {p_value:.2f}')
+
+# 4. Gini Coefficient (Gini = 2 * AUC - 1)
+gini_coefficient = 2 * auc_score - 1
+print(f'Gini Coefficient: {gini_coefficient:.2f}')
+
+# Step 6: Visualize the ROC Curve
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, label=f'ROC curve (area = {auc_score:.2f})')
+plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC)')
+plt.legend(loc='lower right')
+plt.show()
+
+# Step 7: Feature Importance (to check which variables contributed most to the prediction)
+feature_importance = model.feature_importances_
+features = X.columns
+
+plt.figure(figsize=(8, 6))
+sns.barplot(x=feature_importance, y=features)
+plt.title('Feature Importance')
+plt.show()
+
+# Step 8: Model Calibration (Optional but useful for assessing model confidence)
+from sklearn.calibration import calibration_curve
+
+# Calibration curve for the test set (check how predicted probabilities match actual outcomes)
+prob_true, prob_pred = calibration_curve(y_test, y_pred_prob_test, n_bins=10)
+
+plt.figure(figsize=(8, 6))
+plt.plot(prob_pred, prob_true, marker='o', label='Model Calibration')
+plt.plot([0, 1], [0, 1], linestyle='--', label='Perfectly Calibrated')
+plt.xlabel('Mean Predicted Probability')
+plt.ylabel('Fraction of Positives')
+plt.title('Calibration Curve')
+plt.legend()
+plt.show()
+
+# Final Comments:
+# - ROC-AUC, KS, and Gini metrics are all highly useful in assessing the discriminatory power of credit risk models.
+# - A high AUC indicates that the model can correctly distinguish between default and non-default customers.
+# - A high KS statistic signifies that the model is effectively separating default and non-default predictions.
+# - A high Gini coefficient suggests good ranking ability of the model to distinguish between classes.
+# - Feature importance helps us identify the key drivers in our model, which can provide insight for business decisions.
