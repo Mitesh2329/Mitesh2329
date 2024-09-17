@@ -1,0 +1,179 @@
+Here’s a block of code that computes sensitivity, specificity, accuracy, and other key metrics such as precision, recall, and F1-score, followed by a simple explanation of each term, including true positives (TP), true negatives (TN), false positives (FP), and false negatives (FN).
+
+Python Code Block:
+
+# Import necessary libraries
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+
+# Example: Simulated Predictions and Actuals (0 for Non-default, 1 for Default)
+y_true = [0, 1, 1, 0, 1, 1, 0, 0, 1, 0]  # Actual values
+y_pred = [0, 1, 1, 0, 0, 1, 0, 0, 1, 1]  # Predicted values by the model
+
+# Step 1: Confusion Matrix (TP, TN, FP, FN)
+cm = confusion_matrix(y_true, y_pred)
+print(f"Confusion Matrix:\n{cm}")
+
+# Extract TP, TN, FP, FN from confusion matrix
+tn, fp, fn, tp = cm.ravel()
+
+# Step 2: Calculate Sensitivity, Specificity, and Other Metrics
+accuracy = accuracy_score(y_true, y_pred)  # Accuracy
+precision = precision_score(y_true, y_pred)  # Precision (Positive Predictive Value)
+recall = recall_score(y_true, y_pred)  # Sensitivity (Recall, True Positive Rate)
+specificity = tn / (tn + fp)  # Specificity (True Negative Rate)
+f1 = f1_score(y_true, y_pred)  # F1 Score
+
+# Display the metrics
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall (Sensitivity): {recall:.2f}")
+print(f"Specificity: {specificity:.2f}")
+print(f"F1 Score: {f1:.2f}")
+
+Output:
+
+Confusion Matrix:
+[[4 1]
+ [1 4]]
+
+Accuracy: 0.80
+Precision: 0.80
+Recall (Sensitivity): 0.80
+Specificity: 0.80
+F1 Score: 0.80
+
+
+---
+
+Key Terms & Their Meanings:
+
+1. Confusion Matrix:
+
+This matrix helps visualize the performance of a classification model by comparing actual values with predicted values.
+
+It is structured like this:
+
+|     | Predicted Non-Default | Predicted Default |
+|-----|-----------------------|-------------------|
+| Actual Non-Default | True Negative (TN) | False Positive (FP) |
+| Actual Default     | False Negative (FN) | True Positive (TP)  |
+
+
+
+2. True Positive (TP):
+
+The model correctly predicted a default (positive outcome).
+
+Example: If a borrower defaults, and the model correctly identifies them as a default.
+
+
+
+3. True Negative (TN):
+
+The model correctly predicted a non-default (negative outcome).
+
+Example: If a borrower does not default, and the model correctly identifies them as non-default.
+
+
+
+4. False Positive (FP):
+
+The model incorrectly predicted a default when there was no default.
+
+Example: If a borrower does not default but the model predicted they would, this is often called a Type I error.
+
+
+
+5. False Negative (FN):
+
+The model incorrectly predicted a non-default when there was a default.
+
+Example: If a borrower defaults but the model predicted they wouldn’t, this is called a Type II error.
+
+
+
+
+
+---
+
+Metrics:
+
+1. Accuracy:
+
+Definition: The proportion of correct predictions (both defaults and non-defaults) out of all predictions.
+
+Formula: (TP + TN) / (TP + TN + FP + FN)
+
+Interpretation: Accuracy measures overall model performance but can be misleading in imbalanced datasets (e.g., if defaults are rare).
+
+
+
+2. Precision (Positive Predictive Value):
+
+Definition: The proportion of predicted defaults that are actual defaults.
+
+Formula: TP / (TP + FP)
+
+Interpretation: High precision means that when the model predicts a default, it is often correct. Useful when false positives (FP) are costly (e.g., incorrectly labeling someone as high risk).
+
+
+
+3. Recall (Sensitivity or True Positive Rate):
+
+Definition: The proportion of actual defaults that were correctly predicted by the model.
+
+Formula: TP / (TP + FN)
+
+Interpretation: High recall means that the model is good at identifying most actual defaults. Useful when false negatives (FN) are costly (e.g., missing an actual default).
+
+
+
+4. Specificity (True Negative Rate):
+
+Definition: The proportion of actual non-defaults that were correctly predicted by the model.
+
+Formula: TN / (TN + FP)
+
+Interpretation: High specificity means that the model is good at identifying non-defaults. Important when you want to avoid falsely identifying non-risky customers as risky.
+
+
+
+5. F1-Score:
+
+Definition: The harmonic mean of precision and recall, providing a balanced metric when dealing with class imbalance.
+
+Formula: 2 * (Precision * Recall) / (Precision + Recall)
+
+Interpretation: High F1-score means a good balance between precision and recall. Useful when there’s a need to balance false positives and false negatives.
+
+
+
+
+
+---
+
+When to Use Each Metric:
+
+Accuracy: Use when the classes (default and non-default) are relatively balanced. However, if the data is imbalanced (e.g., defaults are much rarer than non-defaults), accuracy can be misleading.
+
+Precision: Use when false positives are costly. In credit risk, this is relevant when you want to minimize giving loans to risky customers, as falsely identifying a non-defaulter as a defaulter can be expensive.
+
+Recall (Sensitivity): Use when false negatives are more important, i.e., when you want to catch as many defaulters as possible. This is crucial when missing a default prediction has high consequences.
+
+Specificity: Use when avoiding false positives is a priority. For example, in situations where wrongly predicting a defaulter (when they’re not) leads to significant financial losses or reputational risk.
+
+F1-Score: Use when you need a balance between precision and recall. It’s a good measure when you care about both avoiding false positives and false negatives.
+
+
+
+---
+
+Example in Credit Risk:
+
+If you're developing a model to predict credit defaults, and the goal is to ensure that most actual defaulters are correctly identified, then recall is important. A high recall means fewer defaulters are missed.
+
+However, if falsely predicting a non-defaulter as a defaulter (i.e., false positives) leads to reputational risk or lost business opportunities (e.g., denying credit to good customers), then precision and specificity become crucial.
+
+F1-score is useful if you need to strike a balance between both.
+
+
