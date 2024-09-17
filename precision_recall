@@ -1,0 +1,27 @@
+# Import necessary libraries
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+
+# Example: Simulated Predictions and Actuals (0 for Non-default, 1 for Default)
+y_true = [0, 1, 1, 0, 1, 1, 0, 0, 1, 0]  # Actual values
+y_pred = [0, 1, 1, 0, 0, 1, 0, 0, 1, 1]  # Predicted values by the model
+
+# Step 1: Confusion Matrix (TP, TN, FP, FN)
+cm = confusion_matrix(y_true, y_pred)
+print(f"Confusion Matrix:\n{cm}")
+
+# Extract TP, TN, FP, FN from confusion matrix
+tn, fp, fn, tp = cm.ravel()
+
+# Step 2: Calculate Sensitivity, Specificity, and Other Metrics
+accuracy = accuracy_score(y_true, y_pred)  # Accuracy
+precision = precision_score(y_true, y_pred)  # Precision (Positive Predictive Value)
+recall = recall_score(y_true, y_pred)  # Sensitivity (Recall, True Positive Rate)
+specificity = tn / (tn + fp)  # Specificity (True Negative Rate)
+f1 = f1_score(y_true, y_pred)  # F1 Score
+
+# Display the metrics
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall (Sensitivity): {recall:.2f}")
+print(f"Specificity: {specificity:.2f}")
+print(f"F1 Score: {f1:.2f}")
