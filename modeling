@@ -43,77 +43,68 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 numerical_features = ['age', 'fnlwgt', 'education-num', 'hours-per-week']
 categorical_features = ['workclass', 'education', 'marital-status', 'occupation', 'relationship', 'race', 'sex', 'native-country']
 
+# Create transformers
 numerical_transformer = StandardScaler()
 categorical_transformer = OneHotEncoder(handle_unknown='ignore')
 
+# Create preprocessing pipeline
 preprocessor = ColumnTransformer(
     transformers=[
         ('num', numerical_transformer, numerical_features),
         ('cat', categorical_transformer, categorical_features)
     ])
 
-# Preprocessing and training pipeline
-model = Pipeline(steps=[('preprocessor', preprocessor)])
-X_train_processed = model.fit_transform(X_train)
-X_test_processed = model.transform(X_test)
+# Define and fit the model pipeline
+model = Pipeline(steps=[('preprocessor', preprocessor),
+                         ('classifier', RandomForestClassifier(random_state=42))])
+
+# Fit the model
+model.fit(X_train, y_train)
 
 # 5. Data Visualization
-clf = RandomForestClassifier(random_state=42)
-clf.fit(X_train_processed, y_train)
-
-importances = clf.feature_importances_
+# Feature importances visualization
+importances = model.named_steps['classifier'].feature_importances_
+feature_names = numerical_features + list(model.named_steps['preprocessor'].named_transformers_['cat'].get_feature_names_out())
 indices = np.argsort(importances)
 
 plt.figure(figsize=(12, 6))
 plt.title('Feature Importances')
 plt.barh(range(len(indices)), importances[indices], align='center')
-plt.yticks(range(len(indices)), np.array(categorical_features + numerical_features)[indices])
+plt.yticks(range(len(indices)), np.array(feature_names)[indices])
 plt.xlabel('Importance')
 plt.show()
 
-# 6. Model Selection
-models = {
-    'Random Forest': RandomForestClassifier(),
-    'Logistic Regression': LogisticRegression(max_iter=1000)
-}
+# 6. Model Evaluation
+y_pred = model.predict(X_test)
+print("Evaluation:")
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
 
-for name, model in models.items():
-    model.fit(X_train_processed, y_train)
-    print(f"{name} trained")
-
-# 7. Model Evaluation
-for name, model in models.items():
-    y_pred = model.predict(X_test_processed)
-    print(f"Evaluation for {name}:")
-    print(confusion_matrix(y_test, y_pred))
-    print(classification_report(y_test, y_pred))
-
-# 8. Model Tuning and Optimization
+# 7. Model Tuning and Optimization
 param_grid = {
-    'n_estimators': [50, 100, 200],
-    'max_depth': [10, 20, 30],
-    'min_samples_split': [2, 5, 10]
+    'classifier__n_estimators': [50, 100, 200],
+    'classifier__max_depth': [10, 20, 30],
+    'classifier__min_samples_split': [2, 5, 10]
 }
 
-grid_search = GridSearchCV(estimator=RandomForestClassifier(), param_grid=param_grid, cv=3, scoring='accuracy')
-grid_search.fit(X_train_processed, y_train)
+grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=3, scoring='accuracy')
+grid_search.fit(X_train, y_train)
 
 print("Best parameters found: ", grid_search.best_params_)
 
-# 9. Final Model Selection and Validation
+# 8. Final Model Selection and Validation
 best_model = grid_search.best_estimator_
+y_pred_best = best_model.predict(X_test)
 print("Best Model Evaluation:")
-y_pred_best = best_model.predict(X_test_processed)
 print(confusion_matrix(y_test, y_pred_best))
 print(classification_report(y_test, y_pred_best))
 
-# 10. Output Generation and Predictions
-y_pred_final = best_model.predict(X_test_processed)
+# 9. Output Generation and Predictions
 sample_data = X_test.iloc[0:1]
-sample_processed = model.transform(sample_data)
-print("Sample Prediction:", best_model.predict(sample_processed))
+sample_pred = best_model.predict(sample_data)
+print("Sample Prediction:", sample_pred)
 
-# 11. Conclusion and Insights
+# 10. Conclusion and Insights
 print("Model Summary:")
 print(f"Best Model: {grid_search.best_estimator_}")
 print(f"Best Parameters: {grid_search.best_params_}")
