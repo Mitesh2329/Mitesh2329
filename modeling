@@ -29,12 +29,15 @@ plt.title('Correlation Matrix')
 plt.show()
 
 # 3. Data Cleaning
-df.dropna(inplace=True)
-df.drop_duplicates(inplace=True)
+df.dropna(inplace=True)  # Drop rows with missing values
+df.drop_duplicates(inplace=True)  # Drop duplicate rows
 
 # 4. Data Preprocessing
 X = df.drop('income', axis=1)
 y = df['income']
+
+# Convert categorical target variable to numeric
+y = y.map({'<=50K': 0, '>50K': 1})
 
 # Split the data
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -45,7 +48,7 @@ categorical_features = ['workclass', 'education', 'marital-status', 'occupation'
 
 # Create transformers
 numerical_transformer = StandardScaler()
-categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+categorical_transformer = OneHotEncoder(handle_unknown='ignore', sparse=False)
 
 # Create preprocessing pipeline
 preprocessor = ColumnTransformer(
