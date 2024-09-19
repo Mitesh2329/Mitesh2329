@@ -1,0 +1,55 @@
+# Step 1: Import necessary libraries
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+from scipy import stats
+
+# Step 2: Create a synthetic dataset
+np.random.seed(42)
+
+# Generate random data for credit score and income
+n = 1000  # Number of data points
+credit_score = np.random.normal(650, 50, n)  # Credit score centered around 650 with some variance
+income = np.random.normal(50000, 10000, n)   # Income centered around 50,000
+
+# Assume that higher credit score and income reduce the likelihood of default
+# Latent variable (not directly observed)
+latent_variable = 0.01 * credit_score + 0.00001 * income - 7 + np.random.normal(0, 1, n)
+
+# Convert latent variable to a binary outcome (default: 1 if latent_variable > 0)
+default = (latent_variable > 0).astype(int)
+
+# Step 3: Create a DataFrame for the data
+data = pd.DataFrame({
+    'credit_score': credit_score,
+    'income': income,
+    'default': default
+})
+
+# Step 4: Define the independent variables (X) and the dependent variable (y)
+X = data[['credit_score', 'income']]
+y = data['default']
+
+# Add a constant (intercept) to the independent variables for the Probit model
+X = sm.add_constant(X)
+
+# Step 5: Fit a Probit regression model
+probit_model = sm.Probit(y, X)
+probit_result = probit_model.fit()
+
+# Step 6: Print the summary of the Probit model
+print(probit_result.summary())
+
+# Step 7: Predict the probability of default for new borrowers
+new_borrowers = pd.DataFrame({
+    'credit_score': [700, 620, 680],
+    'income': [55000, 40000, 48000]
+})
+new_borrowers = sm.add_constant(new_borrowers)
+
+# Predict the probability of default for new borrowers
+default_probabilities = probit_result.predict(new_borrowers)
+
+# Step 8: Print the predicted probabilities
+print("\nPredicted Probability of Default for New Borrowers:")
+print(default_probabilities)
