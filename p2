@@ -1,0 +1,116 @@
+# Python Data Types and Common Errors Demonstration
+
+# 1. Different Types of Data in Python
+
+# Integer
+age = 30
+print("Integer example:", age)
+
+# Float
+height = 5.9
+print("Float example:", height)
+
+# String
+name = "Alice"
+print("String example:", name)
+
+# Boolean
+is_student = True
+print("Boolean example:", is_student)
+
+# List
+fruits = ["apple", "banana", "cherry"]
+print("List example:", fruits)
+
+# Tuple
+coordinates = (10.0, 20.0)
+print("Tuple example:", coordinates)
+
+# Dictionary
+person = {"name": "Bob", "age": 25}
+print("Dictionary example:", person)
+
+# Set
+unique_numbers = {1, 2, 3, 2}
+print("Set example (duplicates removed):", unique_numbers)
+
+# NoneType
+nothing = None
+print("NoneType example:", nothing)
+
+print("\n--- Demonstrating Common Python Errors ---\n")
+
+# 2. Different Types of Errors in Python
+
+# a. SyntaxError
+try:
+    # This line has a syntax error (missing closing parenthesis)
+    eval('print("Hello World"')
+except SyntaxError as se:
+    print("SyntaxError: ", se)
+
+# b. NameError
+try:
+    # Trying to use a variable that hasn't been defined
+    print(undeclared_variable)
+except NameError as ne:
+    print("NameError: ", ne)
+
+# c. TypeError
+try:
+    # Adding a string and an integer raises a TypeError
+    result = "Age: " + 30
+except TypeError as te:
+    print("TypeError: ", te)
+
+# d. IndexError
+try:
+    # Accessing an index that is out of range in a list
+    print(fruits[5])
+except IndexError as ie:
+    print("IndexError: ", ie)
+
+# e. KeyError
+try:
+    # Accessing a key that doesn't exist in a dictionary
+    print(person["address"])
+except KeyError as ke:
+    print("KeyError: ", ke)
+
+# f. ValueError
+try:
+    # Converting a non-numeric string to integer raises ValueError
+    number = int("abc")
+except ValueError as ve:
+    print("ValueError: ", ve)
+
+# g. AttributeError
+try:
+    # Trying to call a non-existent method on a string
+    name.append("Smith")
+except AttributeError as ae:
+    print("AttributeError: ", ae)
+
+# h. ZeroDivisionError
+try:
+    # Dividing by zero raises ZeroDivisionError
+    result = 10 / 0
+except ZeroDivisionError as zde:
+    print("ZeroDivisionError: ", zde)
+
+# i. ImportError
+try:
+    # Trying to import a non-existent module
+    import non_existent_module
+except ImportError as ime:
+    print("ImportError: ", ime)
+
+# j. FileNotFoundError
+try:
+    # Trying to open a file that doesn't exist
+    with open("non_existent_file.txt", "r") as file:
+        content = file.read()
+except FileNotFoundError as fnfe:
+    print("FileNotFoundError: ", fnfe)
+
+print("\n--- End of Demonstration ---")
