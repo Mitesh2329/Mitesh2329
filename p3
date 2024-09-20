@@ -1,0 +1,104 @@
+# Comprehensive Data Preprocessing in Python
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.feature_selection import SelectKBest, f_classif
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 1. Loading the Data
+# For demonstration, we'll create a sample dataset
+data = {
+    'Age': [25, 30, 22, np.nan, 28, 35, 40, 29, 31, 24],
+    'Salary': [50000, 60000, 52000, 58000, np.nan, 75000, 80000, 62000, 61000, 54000],
+    'Department': ['Sales', 'Engineering', 'HR', 'Engineering', 'Sales', 'HR', 'Engineering', 'Sales', 'HR', 'Engineering'],
+    'Gender': ['Male', 'Female', 'Female', 'Male', 'Female', 'Male', 'Male', 'Female', 'Female', 'Male'],
+    'Purchased': ['No', 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes', 'No', 'No', 'Yes']
+}
+
+df = pd.DataFrame(data)
+print("Original Data:")
+print(df)
+
+# 2. Handling Missing Values
+# Display missing values
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+# Impute numerical columns with mean
+imputer_num = SimpleImputer(strategy='mean')
+df[['Age', 'Salary']] = imputer_num.fit_transform(df[['Age', 'Salary']])
+print("\nData after imputing missing values:")
+print(df)
+
+# 3. Encoding Categorical Variables
+# Label Encoding for binary categorical variables
+le = LabelEncoder()
+df['Gender'] = le.fit_transform(df['Gender'])  # Male=1, Female=0
+print("\nData after Label Encoding 'Gender':")
+print(df)
+
+# One-Hot Encoding for non-binary categorical variables
+df = pd.get_dummies(df, columns=['Department'], drop_first=True)
+print("\nData after One-Hot Encoding 'Department':")
+print(df)
+
+# Encoding the target variable
+df['Purchased'] = le.fit_transform(df['Purchased'])  # No=0, Yes=1
+print("\nData after Encoding 'Purchased':")
+print(df)
+
+# 4. Feature Scaling
+# Separating features and target
+X = df.drop('Purchased', axis=1)
+y = df['Purchased']
+
+# Applying Standard Scaler
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+X_scaled = pd.DataFrame(X_scaled, columns=X.columns)
+print("\nFeatures after Standard Scaling:")
+print(X_scaled)
+
+# Alternatively, using Min-Max Scaler
+# scaler = MinMaxScaler()
+# X_scaled = scaler.fit_transform(X)
+# X_scaled = pd.DataFrame(X_scaled, columns=X.columns)
+
+# 5. Feature Selection
+# Selecting top 2 features based on ANOVA F-test
+selector = SelectKBest(score_func=f_classif, k=2)
+X_selected = selector.fit_transform(X_scaled, y)
+selected_features = X.columns[selector.get_support()]
+print("\nSelected Features:", selected_features)
+
+# 6. Handling Outliers
+# Visualizing outliers in 'Salary' using boxplot
+plt.figure(figsize=(6,4))
+sns.boxplot(x=df['Salary'])
+plt.title('Salary Boxplot')
+plt.show()
+
+# Removing outliers beyond 1.5*IQR
+Q1 = df['Salary'].quantile(0.25)
+Q3 = df['Salary'].quantile(0.75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+df_clean = df[(df['Salary'] >= lower_bound) & (df['Salary'] <= upper_bound)]
+print("\nData after removing outliers:")
+print(df_clean)
+
+# 7. Splitting the Dataset
+X_final = df_clean[selected_features]
+y_final = df_clean['Purchased']
+X_train, X_test, y_train, y_test = train_test_split(X_final, y_final, test_size=0.2, random_state=42)
+print("\nTraining Features:")
+print(X_train)
+print("\nTesting Features:")
+print(X_test)
+
+print("\n--- Data Preprocessing Completed ---")
