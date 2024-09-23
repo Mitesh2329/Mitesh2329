@@ -1,0 +1,86 @@
+import itertools
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+from scipy.stats import norm
+
+# Assuming 'mef_df' is your DataFrame containing macroeconomic variables and the target variable 'Z'
+# Columns include 'GDP', 'SGDP', and other macroeconomic variables
+
+def find_best_model(data, target_var):
+    X = data.drop(columns=[target_var])
+    y = data[target_var]
+    
+    best_r2 = -np.inf
+    best_model = None
+    best_combination = None
+    
+    # Iterate over all possible combinations of predictors
+    for i in range(1, len(X.columns) + 1):
+        for combo in itertools.combinations(X.columns, i):
+            # **Modification:** Skip combinations that include both 'GDP' and 'SGDP'
+            if 'GDP' in combo and 'SGDP' in combo:
+                continue  # Skip this combination
+            
+            # Prepare the subset of data for the current combination
+            X_combo = X[list(combo)]
+            
+            # Fit the linear regression model
+            model = LinearRegression().fit(X_combo, y)
+            
+            # Predict and calculate R-squared
+            y_pred = model.predict(X_combo)
+            r2 = r2_score(y, y_pred)
+            
+            # Update the best model if current R-squared is higher
+            if r2 > best_r2:
+                best_r2 = r2
+                best_model = model
+                best_combination = combo
+    
+    # Output the best R-squared and corresponding combination
+    print(f"Best R-squared: {best_r2}")
+    print(f"Best combination of variables: {best_combination}")
+    
+    # Extract model coefficients
+    intercept = best_model.intercept_
+    coefficients = best_model.coef_
+    print(f"Intercept: {intercept}")
+    print(f"Coefficients: {coefficients}")
+    
+    # Forecasting for 2024
+    # Assuming 'mef_df' contains future data and you want to forecast 'Z' for 2024
+    # Adjust the slicing as per your actual data structure
+    mef_2024 = data.iloc[:4].copy()  # Example: first 4 rows for 2024
+    X_2024 = mef_2024[list(best_combination)]
+    
+    # Calculate the forecasted 'Z' using the best model
+    forecasted_z = np.dot(X_2024, coefficients) + intercept
+    mef_2024['Forecasted_Z'] = forecasted_z
+    
+    # Parameters for PIT_PD calculation (ensure these are defined appropriately)
+    K = 1.0      # Example value, replace with actual
+    Rho = 0.5    # Example value, replace with actual
+    tho = 0.3    # Example value, replace with actual
+    
+    # Calculate PIT_PD using the normal cumulative distribution function
+    mef_2024['PIT_PD'] = norm.cdf((K - np.sqrt(Rho) * mef_2024['Forecasted_Z']) / np.sqrt(1 - tho))
+    
+    # Calculate the average PIT_PD
+    average_PIT_PO = np.average(mef_2024['PIT_PD']) * 100
+    average_PIT_PD = f"Average PIT_PO: {average_PIT_PO:.2f}%"
+    
+    print("This is the Average forward-looking PIT FO:", average_PIT_PD)
+    
+    return {
+        'best_r2': best_r2,
+        'best_combination': best_combination,
+        'model': best_model,
+        'forecasted_z': forecasted_z,
+        'average_PIT_PD': average_PIT_PD
+    }
+
+# Example usage:
+# Make sure to replace 'mef_df' and 'Z' with your actual DataFrame and target variable name
+# results = find_best_model(mef_df, 'Z')
