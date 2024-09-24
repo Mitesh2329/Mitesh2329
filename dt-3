@@ -1,0 +1,60 @@
+import pandas as pd
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree
+import matplotlib.pyplot as plt
+
+# Step 1: Create a synthetic dataset
+np.random.seed(42)  # For reproducibility
+data = {
+    'Age': np.random.randint(18, 65, 200),  # Age between 18 and 65
+    'MoB': np.random.randint(1, 25, 200),   # Months on Books between 1 and 25
+    'Region': np.random.choice(['North', 'South', 'East', 'West', 'Centre'], 200),
+    'Income': np.random.randint(20000, 100000, 200),  # Income between 20k and 100k
+    'NPA': np.random.choice([0, 1], 200)   # 0 = No NPA, 1 = NPA
+}
+
+df = pd.DataFrame(data)
+
+# Step 2: Train the Decision Tree Classifier
+X = df[['Age', 'MoB', 'Region', 'Income']]
+y = df['NPA']
+
+# Convert categorical variable 'Region' into dummy/indicator variables
+X = pd.get_dummies(X, columns=['Region'], drop_first=True)
+
+# Create and train the decision tree classifier
+clf = DecisionTreeClassifier(max_depth=4, random_state=0)
+clf.fit(X, y)
+
+# Step 3: Visualize the Decision Tree
+plt.figure(figsize=(12, 8))
+tree_plot = tree.plot_tree(clf, 
+                            filled=True, 
+                            rounded=True, 
+                            feature_names=X.columns,
+                            class_names=['No NPA', 'NPA'])
+
+# Highlight specific leaf nodes based on the predicted NPA values
+for i in range(len(tree_plot)):
+    # Choose criteria to color specific leaf nodes
+    node_index = tree_plot[i].get_gid()
+    if clf.tree_.n_node_samples[node_index] > 15:  # Adjust threshold as needed
+        tree_plot[i].set_facecolor('lightgreen')  # Highlight in light green
+    else:
+        tree_plot[i].set_facecolor('lightcoral')  # Default color for other nodes
+
+plt.title('Decision Tree for NPA Classification')
+plt.show()
+
+# Step 4: Output Leaf Node Assignments
+leaf_node_indices = clf.apply(X)
+df['Leaf Node'] = leaf_node_indices
+
+# Count instances per leaf node and show possible pools
+pool_counts = df.groupby('Leaf Node').agg({'NPA': 'mean', 'Leaf Node': 'size'}).reset_index(name='Count')
+pool_counts.columns = ['Leaf Node', 'NPA Rate', 'Count']
+print(pool_counts)
+
+# Show the first few rows with leaf node assignments
+print(df[['Age', 'MoB', 'Income', 'NPA', 'Leaf Node']].head(10))
