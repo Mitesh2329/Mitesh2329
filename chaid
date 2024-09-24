@@ -1,0 +1,28 @@
+import pandas as pd
+import numpy as np
+from chaid import Tree
+
+# Sample Data Creation
+data = {
+    'Month_on_Books': np.random.randint(1, 36, 1000),  # Random months between 1 and 36
+    'Exposure': np.random.randint(5000, 100000, 1000),  # Random exposure between 5,000 and 100,000
+    'Region': np.random.choice(['Urban', 'Suburban', 'Rural'], 1000),  # Random regions
+    'NPA': np.random.choice([0, 1], 1000, p=[0.8, 0.2]),  # 80% performing, 20% non-performing
+}
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# Display the first few rows
+print("Sample Data:")
+print(df.head())
+
+# Fit the CHAID model
+chaid_tree = Tree.from_pandas(df, target='NPA', features=['Month_on_Books', 'Exposure', 'Region'])
+
+# Display the tree structure
+print("\nCHAID Decision Tree Structure:")
+print(chaid_tree)
+
+# Visualize the decision tree (if you have graphviz installed)
+# chaid_tree.plot()
