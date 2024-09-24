@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
+from scipy.stats import chi2_contingency
+
+# Sample Data Creation
+np.random.seed(0)  # For reproducibility
+data = {
+    'Month_on_Books': np.random.randint(1, 36, 1000),  # Random months between 1 and 36
+    'Exposure': np.random.randint(5000, 100000, 1000),  # Random exposure between 5,000 and 100,000
+    'Region': np.random.choice(['Urban', 'Suburban', 'Rural'], 1000),  # Random regions
+    'NPA': np.random.choice([0, 1], 1000, p=[0.8, 0.2]),  # 80% performing, 20% non-performing
+}
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# Display the first few rows
+print("Sample Data:")
+print(df.head())
+
+# Perform Chi-Squared Test for Region
+contingency_table = pd.crosstab(df['Region'], df['NPA'])
+chi2, p, dof, expected = chi2_contingency(contingency_table)
+print("\nChi-Squared Test Results for Region:")
+print(f"Chi2: {chi2}, p-value: {p}")
+
+# Convert categorical variable 'Region' to numerical using one-hot encoding
+df = pd.get_dummies(df, columns=['Region'], drop_first=True)
+
+# Prepare data for training
+X = df.drop('NPA', axis=1)  # Features
+y = df['NPA']  # Target variable
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+# Initialize the Decision Tree Classifier
+clf = DecisionTreeClassifier(criterion='gini', max_depth=3)
+
+# Fit the model
+clf.fit(X_train, y_train)
+
+# Make predictions
+y_pred = clf.predict(X_test)
+
+# Display the classification report and confusion matrix
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+# Plot the decision tree
+plt.figure(figsize=(12, 8))
+plot_tree(clf, feature_names=X.columns, class_names=['Performing', 'NPA'], filled=True)
+plt.title("Decision Tree")
+plt.show()
