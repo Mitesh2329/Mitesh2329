@@ -1,0 +1,77 @@
+import pandas as pd
+import numpy as np
+import random
+
+# Simulating a more realistic loan portfolio dataset
+np.random.seed(42)
+
+data = pd.DataFrame({
+    'loan_amount': np.random.randint(5000, 50000, 1000),
+    'loan_duration': np.random.randint(12, 120, 1000),
+    'credit_score': np.random.randint(500, 800, 1000),
+    'income': np.random.randint(15000, 100000, 1000),
+    'debt_to_income_ratio': np.random.uniform(0.1, 0.7, 1000),
+    'age': np.random.randint(20, 65, 1000),
+    'employment_status': np.random.choice(['employed', 'self-employed', 'unemployed'], 1000, p=[0.6, 0.3, 0.1]),
+    'education': np.random.choice(['high school', 'bachelor', 'master', 'phd'], 1000, p=[0.4, 0.4, 0.15, 0.05]),
+    'marital_status': np.random.choice(['single', 'married', 'divorced'], 1000, p=[0.4, 0.5, 0.1]),
+    'number_of_dependents': np.random.randint(0, 5, 1000),
+    'loan_default': np.random.choice([0, 1], 1000, p=[0.8, 0.2])  # Default rate of 20%
+})
+
+# Binning continuous variables for WoE and IV calculation
+def bin_variable(df, col, bins=10):
+    df['bin'] = pd.qcut(df[col], q=bins, duplicates='drop')
+    return df
+
+# Function to calculate WoE and IV
+def calc_woe_iv(df, feature, target):
+    df = bin_variable(df, feature)
+    grouped = df.groupby('bin')[target].agg(['count', 'sum'])
+    grouped.columns = ['total', 'bad']
+    grouped['good'] = grouped['total'] - grouped['bad']
+    grouped['bad_dist'] = grouped['bad'] / grouped['bad'].sum()
+    grouped['good_dist'] = grouped['good'] / grouped['good'].sum()
+    
+    grouped['woe'] = np.log(grouped['good_dist'] / grouped['bad_dist']).replace([np.inf, -np.inf], 0)
+    grouped['iv'] = (grouped['good_dist'] - grouped['bad_dist']) * grouped['woe']
+    
+    iv = grouped['iv'].sum()
+    
+    return grouped, iv
+
+# List of features to evaluate
+features = ['loan_amount', 'loan_duration', 'credit_score', 'income', 'debt_to_income_ratio', 
+            'age', 'employment_status', 'education', 'marital_status', 'number_of_dependents']
+target = 'loan_default'
+
+# Calculating WoE and IV for each feature
+iv_values = {}
+for feature in features:
+    if data[feature].dtype == 'O':  # For categorical variables
+        grouped = data.groupby(feature)[target].agg(['count', 'sum'])
+        grouped.columns = ['total', 'bad']
+        grouped['good'] = grouped['total'] - grouped['bad']
+        grouped['bad_dist'] = grouped['bad'] / grouped['bad'].sum()
+        grouped['good_dist'] = grouped['good'] / grouped['good'].sum()
+        grouped['woe'] = np.log(grouped['good_dist'] / grouped['bad_dist']).replace([np.inf, -np.inf], 0)
+        grouped['iv'] = (grouped['good_dist'] - grouped['bad_dist']) * grouped['woe']
+        iv = grouped['iv'].sum()
+    else:  # For continuous variables
+        grouped, iv = calc_woe_iv(data, feature, target)
+    
+    iv_values[feature] = iv
+    print(f"\nFeature: {feature}")
+    print(f"Information Value (IV): {iv:.4f}")
+    print(grouped[['total', 'bad', 'good', 'woe', 'iv']])
+
+# Display the IV values for all features
+print("\nInformation Value Summary:")
+for feature, iv in iv_values.items():
+    print(f"{feature}: {iv:.4f}")
+
+# Ideal IV interpretation range:
+# - IV < 0.02: Not Predictive
+# - 0.02 <= IV < 0.1: Weak Predictive Power
+# - 0.1 <= IV < 0.3: Medium Predictive Power
+# - IV >= 0.3: Strong Predictive Power
