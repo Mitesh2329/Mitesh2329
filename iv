@@ -1,0 +1,55 @@
+import pandas as pd
+import numpy as np
+
+# Sample loan portfolio data
+data = pd.DataFrame({
+    'loan_amount': [5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000],
+    'loan_duration': [12, 24, 36, 48, 60, 72, 84, 96, 108, 120],
+    'credit_score': [650, 700, 550, 620, 680, 750, 500, 770, 690, 720],
+    'income': [35000, 45000, 20000, 30000, 40000, 50000, 15000, 55000, 38000, 47000],
+    'debt_to_income_ratio': [0.4, 0.3, 0.6, 0.45, 0.35, 0.25, 0.65, 0.20, 0.38, 0.28],
+    'loan_default': [1, 0, 1, 0, 0, 0, 1, 0, 0, 1]  # Target variable: 1 = Default, 0 = No Default
+})
+
+# Function to calculate WoE and IV
+def calc_woe_iv(df, feature, target):
+    df = df[[feature, target]].copy()
+    
+    # Create bins for continuous variables
+    df['bin'] = pd.qcut(df[feature], q=10, duplicates='drop')
+    
+    # Group by bins and calculate counts for good (no default) and bad (default) loans
+    grouped = df.groupby('bin')[target].agg(['count', 'sum'])
+    grouped.columns = ['total', 'bad']
+    grouped['good'] = grouped['total'] - grouped['bad']
+    
+    # Calculate distribution of good and bad loans
+    grouped['bad_dist'] = grouped['bad'] / grouped['bad'].sum()
+    grouped['good_dist'] = grouped['good'] / grouped['good'].sum()
+    
+    # Calculate WoE and IV
+    grouped['woe'] = np.log(grouped['good_dist'] / grouped['bad_dist']).replace([np.inf, -np.inf], 0)
+    grouped['iv'] = (grouped['good_dist'] - grouped['bad_dist']) * grouped['woe']
+    
+    # Summing up IV for the feature
+    iv = grouped['iv'].sum()
+    
+    return grouped, iv
+
+# List of features to evaluate
+features = ['loan_amount', 'loan_duration', 'credit_score', 'income', 'debt_to_income_ratio']
+target = 'loan_default'
+
+# Calculating WoE and IV for each feature and printing the results
+for feature in features:
+    grouped_data, iv = calc_woe_iv(data, feature, target)
+    
+    print(f"\nFeature: {feature}")
+    print(grouped_data[['total', 'bad', 'good', 'woe', 'iv']])
+    print(f"Information Value (IV) for {feature}: {iv:.4f}")
+
+# Ideal IV interpretation range:
+# - IV < 0.02: Not Predictive
+# - 0.02 <= IV < 0.1: Weak Predictive Power
+# - 0.1 <= IV < 0.3: Medium Predictive Power
+# - IV >= 0.3: Strong Predictive Power
