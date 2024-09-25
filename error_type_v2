@@ -1,0 +1,61 @@
+# Demonstrating Python data types and common errors
+
+# Integer (int)
+x = 5  # Integer data type
+print("Integer:", x)
+
+# Floating point number (float)
+y = 3.14  # Float data type
+print("Float:", y)
+
+# String (str)
+name = "Alice"  # String data type
+print("String:", name)
+
+# Boolean (bool)
+is_student = True  # Boolean data type
+print("Boolean:", is_student)
+
+# List
+fruits = ["apple", "banana", "cherry"]  # List data type (a collection of items)
+print("List:", fruits)
+
+# Tuple (similar to a list but immutable)
+coordinates = (10.0, 20.0)  # Tuple data type
+print("Tuple:", coordinates)
+
+# Dictionary (key-value pairs)
+person = {"name": "John", "age": 25}  # Dictionary data type
+print("Dictionary:", person)
+
+# Set (unique items, unordered)
+unique_numbers = {1, 2, 3, 3, 4}  # Set data type (removes duplicates)
+print("Set:", unique_numbers)
+
+# COMMON ERRORS:
+
+# 1. NameError: Trying to use a variable that is not declared
+print(undeclared_variable)  # This will cause NameError
+
+# 2. TypeError: Trying to concatenate a string with an integer
+print("Age:" + 25)  # This will cause TypeError
+
+# 3. IndexError: Accessing an index that doesn't exist in a list
+print(fruits[5])  # This will cause IndexError
+
+# 4. KeyError: Accessing a key that doesn't exist in a dictionary
+print(person["address"])  # This will cause KeyError
+
+# 5. ValueError: Trying to convert a non-numeric string into an integer
+num = int("abc")  # This will cause ValueError
+
+# 6. ZeroDivisionError: Dividing by zero
+result = 10 / 0  # This will cause ZeroDivisionError
+
+# 7. AttributeError: Trying to use a non-existent method of an object
+name.uppercase()  # The correct method is upper(), this will cause AttributeError
+
+# The program will stop running once it encounters the first error. 
+# You can comment out different sections to see each error in action.
+
+print("\nEnd of Data Types and Errors demonstration.")
