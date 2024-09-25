@@ -1,0 +1,72 @@
+# Step-by-Step EDA in Python
+
+# Step 1: Import Necessary Libraries
+import pandas as pd        # For data manipulation and analysis
+import numpy as np         # For numerical operations
+import matplotlib.pyplot as plt  # For plotting graphs
+import seaborn as sns      # For statistical data visualization
+
+# Step 2: Load the Dataset
+# Load a sample dataset (e.g., Titanic dataset)
+# This is important as it gives us data to analyze.
+df = sns.load_dataset('titanic')
+
+# Step 3: Understand the Data Structure
+# This gives us a quick look at the dataset's structure, including columns and data types.
+print(df.info())          # Shows the data types and non-null counts
+print(df.head())          # Displays the first few rows of the dataset
+
+# Step 4: Check for Missing Values
+# Understanding missing values is essential for data quality.
+missing_values = df.isnull().sum()
+print(missing_values[missing_values > 0])  # Shows columns with missing values
+
+# Step 5: Visualize Missing Values
+# Visualizing missing values helps in understanding their distribution.
+plt.figure(figsize=(10, 6))
+sns.heatmap(df.isnull(), cbar=False, cmap='viridis')  # Heatmap of missing values
+plt.title('Missing Values Heatmap')
+plt.show()
+
+# Step 6: Descriptive Statistics
+# Descriptive statistics help summarize the data and provide insights.
+print(df.describe())      # Shows mean, count, min, max, etc., for numerical columns
+
+# Step 7: Univariate Analysis - Histogram
+# Analyzing the distribution of a single numerical variable using a histogram.
+plt.figure(figsize=(8, 6))
+sns.histplot(df['age'].dropna(), bins=30, kde=True)  # Histogram of ages
+plt.title('Age Distribution')
+plt.xlabel('Age')
+plt.ylabel('Frequency')
+plt.show()
+
+# Step 8: Categorical Analysis
+# Analyzing categorical variables helps us understand their distribution.
+plt.figure(figsize=(8, 6))
+sns.countplot(x='class', data=df)  # Count of passengers by class
+plt.title('Passenger Class Distribution')
+plt.xlabel('Class')
+plt.ylabel('Count')
+plt.show()
+
+# Step 9: Bivariate Analysis - Box Plot
+# Analyzing the relationship between two variables using a box plot.
+plt.figure(figsize=(8, 6))
+sns.boxplot(x='class', y='age', data=df)  # Boxplot of ages by class
+plt.title('Age Distribution by Passenger Class')
+plt.xlabel('Class')
+plt.ylabel('Age')
+plt.show()
+
+# Step 10: Correlation Analysis
+# Understanding correlations helps in identifying relationships between variables.
+plt.figure(figsize=(12, 8))
+correlation_matrix = df.corr()  # Computes the correlation matrix
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f')  # Heatmap of correlations
+plt.title('Correlation Matrix')
+plt.show()
+
+# Importance of EDA:
+# EDA is crucial for uncovering patterns, detecting outliers, and checking assumptions,
+# which guides subsequent analysis and modeling efforts.
