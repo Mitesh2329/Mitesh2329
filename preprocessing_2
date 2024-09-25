@@ -1,0 +1,262 @@
+# Importing necessary libraries
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
+from sklearn.model_selection import train_test_split
+
+# Step 1: Load the dataset (for demonstration, we create a sample DataFrame)
+data = {
+    'Age': [25, 30, np.nan, 35, 40],
+    'Salary': [50000, 54000, 58000, np.nan, 60000],
+    'Gender': ['Male', 'Female', 'Female', 'Male', np.nan],
+    'Purchased': ['No', 'Yes', 'No', 'Yes', 'Yes']
+}
+df = pd.DataFrame(data)
+
+# Display original data
+print("Original Data:")
+print(df)
+
+# ==================== Handling Missing Data ====================
+# Step 2: Handling Missing Data
+# Using mean for numerical data, mode for categorical data
+
+# Fill missing numerical values (Age, Salary) with their respective means
+df['Age'].fillna(df['Age'].mean(), inplace=True)
+df['Salary'].fillna(df['Salary'].mean(), inplace=True)
+
+# Fill missing categorical values (Gender) with mode (most frequent value)
+df['Gender'].fillna(df['Gender'].mode()[0], inplace=True)
+
+# After handling missing data
+print("\nAfter Handling Missing Data (Mean and Mode):")
+print(df)
+
+# When to use:
+# - **Mean**: Use when data is normally distributed (no extreme outliers).
+# - **Median**: Use when the data has outliers or is skewed.
+# - **Mode**: Use for categorical variables (most frequent category).
+
+# ==================== Encoding Categorical Data ====================
+# Step 3: Encoding Categorical Data (Gender, Purchased)
+
+# Converting categorical variable "Gender" to numerical using Label Encoding
+label_encoder_gender = LabelEncoder()
+df['Gender'] = label_encoder_gender.fit_transform(df['Gender'])
+
+# Encoding the target variable "Purchased" (Yes/No) to binary values
+label_encoder_purchased = LabelEncoder()
+df['Purchased'] = label_encoder_purchased.fit_transform(df['Purchased'])
+
+# After encoding categorical data
+print("\nAfter Encoding Categorical Data (Label Encoding):")
+print(df)
+
+# ==================== Feature Scaling ====================
+# Step 4: Feature Scaling (Age, Salary)
+
+# Standardization (use StandardScaler): Transforms the data to have a mean of 0 and a standard deviation of 1
+scaler = StandardScaler()
+df[['Age', 'Salary']] = scaler.fit_transform(df[['Age', 'Salary']])
+
+# After scaling
+print("\nAfter Standardization (Feature Scaling):")
+print(df)
+
+# When to use:
+# - **Standardization** (StandardScaler): When data needs to be normally distributed (especially for algorithms like logistic regression, SVM).
+# - **Normalization** (MinMaxScaler): When you need values in a specific range (like 0 to 1), good for neural networks.
+
+# ==================== Splitting Data into Training and Testing ====================
+# Step 5: Splitting the dataset into training and testing sets
+
+# Features (X) and target (y)
+X = df[['Age', 'Salary', 'Gender']]  # Independent variables (features)
+y = df['Purchased']  # Dependent variable (target)
+
+# Splitting the dataset into 80% training and 20% testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Print the split datasets
+print("\nTraining Features (X_train):")
+print(X_train)
+
+print("\nTest Features (X_test):")
+print(X_test)
+
+print("\nTraining Target (y_train):")
+print(y_train)
+
+print("\nTest Target (y_test):")
+print(y_test)
+
+# ==================== Outlier Detection and Handling ====================
+# Step 6: Detect and handle outliers (Optional)
+
+# Using Z-score to detect outliers
+z_scores = np.abs((df['Age'] - df['Age'].mean()) / df['Age'].std())
+print("\nZ-scores for Age (detecting outliers):")
+print(z_scores)
+
+# If Z-score > 3, it's considered an outlier
+outliers = df[z_scores > 3]
+print("\nDetected Outliers:")
+print(outliers)
+
+# When to use:
+# - **Remove Outliers**: When outliers are due to data entry errors or rare cases that don't contribute to the general trend.
+# - **Cap Outliers**: For large datasets, you might cap them at the 95th or 5th percentile instead of removing.
+
+# ==================== Feature Engineering ====================
+# Step 7: Feature Engineering (Creating new features or modifying existing ones)
+
+# Creating a new feature (e.g., Salary in thousands)
+df['Salary_in_thousands'] = df['Salary'] * 1000
+
+# Print dataset after feature engineering
+print("\nAfter Feature Engineering (Salary in thousands):")
+print(df)
+
+# ==================== Summary ====================
+# In this code, we:
+# - Handled missing data using mean (for numerical) and mode (for categorical).
+# - Encoded categorical data (Gender and Purchased) using label encoding.
+# - Scaled numerical data using standardization.
+# - Split the dataset into training and test sets.
+# - Detected outliers using Z-score.
+# - Created a new feature as an example of feature engineering.
+
+
+#2
+
+# Importing necessary libraries
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder, OneHotEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import SelectKBest, f_classif
+
+# Creating a sample dataset
+data = {
+    'Age': [25, 30, np.nan, 35, 40],
+    'Salary': [50000, 54000, 58000, np.nan, 60000],
+    'Gender': ['Male', 'Female', 'Female', 'Male', np.nan],
+    'Purchased': ['No', 'Yes', 'No', 'Yes', 'Yes']
+}
+df = pd.DataFrame(data)
+
+# Display original data
+print("Original Data:")
+print(df)
+
+# ==================== Handling Missing Data ====================
+# Fill missing numerical values with the mean (Age, Salary)
+df['Age'].fillna(df['Age'].mean(), inplace=True)
+df['Salary'].fillna(df['Salary'].mean(), inplace=True)
+
+# Fill missing categorical values with mode (Gender)
+df['Gender'].fillna(df['Gender'].mode()[0], inplace=True)
+
+# After handling missing data
+print("\nAfter Handling Missing Data:")
+print(df)
+
+# ==================== Encoding Categorical Data ====================
+# Label Encoding: Converts categorical text into numbers (Male = 1, Female = 0)
+label_encoder_gender = LabelEncoder()
+df['Gender'] = label_encoder_gender.fit_transform(df['Gender'])
+
+# Encoding the target variable "Purchased" (Yes/No) into binary values
+label_encoder_purchased = LabelEncoder()
+df['Purchased'] = label_encoder_purchased.fit_transform(df['Purchased'])
+
+# OneHot Encoding: If needed for non-ordinal categories
+# onehot_encoder = OneHotEncoder()
+# encoded_gender = onehot_encoder.fit_transform(df[['Gender']]).toarray()
+
+# After encoding categorical data
+print("\nAfter Encoding Categorical Data:")
+print(df)
+
+# ==================== Feature Scaling ====================
+# Standardization: Transform data to have a mean of 0 and a standard deviation of 1
+standard_scaler = StandardScaler()
+df[['Age', 'Salary']] = standard_scaler.fit_transform(df[['Age', 'Salary']])
+
+# MinMax Scaling: Optionally rescale data to a range between 0 and 1
+# minmax_scaler = MinMaxScaler()
+# df[['Age', 'Salary']] = minmax_scaler.fit_transform(df[['Age', 'Salary']])
+
+# After scaling
+print("\nAfter Feature Scaling:")
+print(df)
+
+# ==================== Splitting Data into Training and Testing ====================
+# Features (X) and target (y)
+X = df[['Age', 'Salary', 'Gender']]  # Independent variables (features)
+y = df['Purchased']  # Dependent variable (target)
+
+# Splitting the dataset into 80% training and 20% testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Print the split datasets
+print("\nTraining Features (X_train):")
+print(X_train)
+
+print("\nTest Features (X_test):")
+print(X_test)
+
+print("\nTraining Target (y_train):")
+print(y_train)
+
+print("\nTest Target (y_test):")
+print(y_test)
+
+# ==================== Feature Selection ====================
+# Using SelectKBest to select the 2 most important features based on ANOVA F-test
+selector = SelectKBest(score_func=f_classif, k=2)
+X_train_selected = selector.fit_transform(X_train, y_train)
+
+# After feature selection
+print("\nAfter Feature Selection (Top 2 Features):")
+print(X_train_selected)
+
+# ==================== Outlier Detection and Handling ====================
+# Z-score method to detect outliers for the 'Age' column
+z_scores = np.abs((df['Age'] - df['Age'].mean()) / df['Age'].std())
+print("\nZ-scores for Age (detecting outliers):")
+print(z_scores)
+
+# Outliers are typically values where Z > 3
+outliers = df[z_scores > 3]
+print("\nDetected Outliers:")
+print(outliers)
+
+# ==================== Summary of What Each Step Does ====================
+# 1. Handling Missing Data:
+#    - Missing values are filled using the mean for numeric columns (Age, Salary) and the mode for categorical columns (Gender).
+#    - Why? Ensures no missing data disrupts model training. Mean is used when data is normally distributed, and mode for categorical data.
+
+# 2. Encoding Categorical Data:
+#    - LabelEncoder: Converts categorical text into numerical labels (e.g., Male = 1, Female = 0).
+#    - OneHotEncoder: Converts categories into binary vectors (useful when categories are non-ordinal).
+#    - Why? Machine learning models cannot handle text, so we need to encode it as numbers.
+
+# 3. Feature Scaling:
+#    - StandardScaler: Transforms data so that the mean = 0 and std = 1. Use when the algorithm expects normally distributed data (e.g., SVM, Logistic Regression).
+#    - MinMaxScaler: Rescales data into a range (usually 0 to 1). Use when features have different units (e.g., age and income) and you want them on the same scale.
+#    - Why? Scaling ensures that features contribute equally to the model and prevents models from being biased towards features with larger values.
+
+# 4. Splitting Data:
+#    - The dataset is split into training and testing sets to evaluate the model’s performance. We use 80% of data for training and 20% for testing.
+#    - Why? To ensure that the model generalizes well on unseen data.
+
+# 5. Feature Selection:
+#    - SelectKBest: Selects the top k most important features based on statistical tests (ANOVA F-test in this case).
+#    - Why? Helps reduce the dimensionality of the data and keeps only the most relevant features for the model.
+
+# 6. Outlier Detection:
+#    - Z-score: Outliers are detected using Z-scores, which measure how many standard deviations a value is from the mean. If Z > 3, it's considered an outlier.
+#    - Why? Outliers can distort model training and lead to inaccurate predictions. We handle them to improve model performance.
+
+# After running this block, your data will be cleaned, preprocessed, and ready for model training!
