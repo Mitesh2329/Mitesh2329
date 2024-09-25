@@ -1,0 +1,64 @@
+
+# Sample data with outliers
+data = {
+    'Age': [23, 45, 12, 36, 30, 99, np.nan, 80, 35, 500],  # '500' is an outlier, contains missing value
+    'Gender': ['Male', 'Female', 'Female', 'Male', 'Male', 'Female', 'Female', 'Male', 'Male', 'Female'],
+    'Income': [40000, 50000, 15000, 45000, 35000, 60000, 17000, 30000, 25000, 70000]  # No missing values in Income
+}
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# -------------------------------------
+# 1. Outlier Detection and Removal using IQR
+# Outliers are extreme values that differ significantly from the rest of the data.
+# They can skew results and lead to incorrect conclusions.
+# We remove them to improve the accuracy of our analysis.
+
+# Calculate IQR for 'Age'
+Q1 = df['Age'].quantile(0.25)  # First quartile (25th percentile)
+Q3 = df['Age'].quantile(0.75)  # Third quartile (75th percentile)
+IQR = Q3 - Q1  # Interquartile range (spread of the middle 50% of the data)
+# IQR is a measure of statistical dispersion and indicates the range within which the central 50% of the data lies.
+
+# Define outlier boundaries
+lower_bound = Q1 - 1.5 * IQR  # Values below this are considered outliers
+upper_bound = Q3 + 1.5 * IQR  # Values above this are considered outliers
+
+# Remove outliers from the DataFrame
+df_filtered = df[(df['Age'] >= lower_bound) & (df['Age'] <= upper_bound)]
+
+# Visualization before and after removing outliers
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+sns.boxplot(df['Age'])  # Box plot shows distribution of 'Age'
+plt.title("Before Outlier Removal")
+
+plt.subplot(1, 2, 2)
+sns.boxplot(df_filtered['Age'])  # Box plot after outliers are removed
+plt.title("After Outlier Removal")
+
+plt.show()
+
+# -------------------------------------
+# 2. Feature Selection using Correlation Matrix
+# Feature selection is the process of identifying important variables that contribute to the output.
+# This helps reduce complexity, improve model performance, and avoid overfitting.
+
+# Compute correlation matrix
+correlation_matrix = df_filtered.corr()  # Calculate correlation between numerical features
+# Correlation measures the relationship between two variables and indicates how one variable may change in response to another.
+# Values range from -1 to 1: 
+# 1 means perfect positive correlation, 
+# -1 means perfect negative correlation, and 
+# 0 means no correlation.
+
+# Visualize correlation matrix with heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')  # Heatmap shows correlation values
+plt.title("Correlation Matrix")
+plt.show()
+
+# Print final DataFrame after outlier removal
+print("Final DataFrame after outlier removal:\n", df_filtered)
