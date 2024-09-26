@@ -1,0 +1,27 @@
+SARIMAX Overview
+
+1. Seasonal Autoregressive Integrated Moving Average with Exogenous Variables (SARIMAX): SARIMAX is a time series forecasting model that extends ARIMA (AutoRegressive Integrated Moving Average) by incorporating seasonality and exogenous (external) variables. It captures trends, seasonal patterns, and the impact of other factors on the target variable.
+
+
+2. When to Use SARIMAX: This model is suitable for datasets that exhibit seasonality and non-stationarity (where mean and variance change over time). It’s particularly useful when external factors (like interest rates or economic indicators) influence the time series being analyzed.
+
+
+3. Model Validation Parameters: Common parameters for validating SARIMAX models include:
+
+Akaike Information Criterion (AIC): Measures model quality; lower values indicate a better fit.
+
+Bayesian Information Criterion (BIC): Similar to AIC but includes a penalty for model complexity.
+
+Mean Absolute Error (MAE) or Root Mean Square Error (RMSE): Assess the prediction accuracy.
+
+
+
+4. Outputs Generated: SARIMAX provides forecasts for future values along with confidence intervals, allowing users to gauge the uncertainty of predictions. It also offers insights into the relationships between the target variable and the exogenous variables.
+
+
+
+Application in Non-Maturing Deposits (NMD) Modeling
+
+Forecasting Deposits: SARIMAX can model the future balances of non-maturing deposits by capturing seasonal trends (e.g., higher deposits during certain months) and incorporating external factors (like interest rates or economic conditions) that influence deposit behaviors. This helps banks in liquidity management and planning by providing reliable forecasts of future deposit balances.
+
+
