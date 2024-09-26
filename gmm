@@ -1,0 +1,18 @@
+Geometric Brownian Motion (GBM) is a mathematical model that describes the random movement of a value over time, incorporating both a consistent upward or downward trend and unpredictable fluctuations. It ensures that values (like asset prices) can never go below zero, making it useful for modeling financial assets.
+
+Geometric Brownian Motion (GBM) - Simple Stats Explanation:
+
+1. Random Movement with Growth: GBM models the random movement of a value (like an asset price) over time, but with an underlying assumption that the value has a steady upward or downward trend. It accounts for both the randomness (like market fluctuations) and a consistent drift (growth or decay), making it a popular way to describe stock prices or other financial assets.
+
+
+2. Log-Normal Distribution: In GBM, the percentage changes (or returns) of the value are normally distributed, meaning the actual values follow a log-normal distribution. This ensures that the value never goes negative, which is important for financial assets or balances, as they can't fall below zero.
+
+
+
+Why Use GBM for Modeling Non-Maturing Deposits (NMD):
+
+Captures Random and Trend Movements: GBM effectively models non-maturing deposits because balances fluctuate over time due to customer behavior, interest rates, or economic conditions. GBM allows for randomness in these changes while considering a long-term trend (either growth or decay).
+
+Effective for Long-Term Projections: Since non-maturing deposits don't have a fixed maturity, GBM's ability to handle uncertainty in future balances while accounting for gradual trends makes it a powerful tool for forecasting and stress testing deposit balances over time. This helps banks manage liquidity and predict future cash flow from these deposits.
+
+
