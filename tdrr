@@ -8,7 +8,7 @@ np.random.seed(42)
 
 # Create a dummy dataset
 # Generate monthly dates for 4 years
-dates = pd.date_range(start='2019-01-01', periods=48, freq='M')
+dates = pd.date_range(start='2020-01-01', periods=48, freq='M')
 
 # Create 20 buckets
 num_buckets = 20
@@ -22,34 +22,44 @@ data = {
 # Create DataFrame
 df = pd.DataFrame(data)
 
-# Calculate average premature amount for the last 4 quarters
-df['Last_4_Quarters_Premature'] = df.groupby('Bucket')['Premature_Amount'].transform(lambda x: x.rolling(window=12, min_periods=1).sum())
+# Define weights for the last 4 quarters, increase weights for recent months
+def calculate_weights(date):
+    # Give more weight to recent months
+    if date >= pd.Timestamp('2023-01-31'):
+        return 1.5  # Last 4 quarters (latest 12 months)
+    elif date >= pd.Timestamp('2022-01-31'):
+        return 1.2  # Previous year
+    else:
+        return 1.0  # Older data
+
+# Apply the weights based on date
+df['Weights'] = df['Date'].apply(calculate_weights)
 
 # Define the dependent and independent variables
 # We will predict the total amount based on the premature amount
-X = df['Last_4_Quarters_Premature']
+X = df[['Premature_Amount', 'Weights']]
 y = df['Total_Amount']
-
-# Create weights - give more weight to the last four quarters
-# More recent months get higher weights
-weights = np.linspace(1, 2, len(X))  # Assign increasing weights
 
 # Add constant for intercept in regression
 X = sm.add_constant(X)
 
 # Fit Weighted Least Squares model
-model = sm.WLS(y, X, weights=weights)
+model = sm.WLS(y, X, weights=df['Weights'])
 results = model.fit()
 
 # Print the summary of the model
 print(results.summary())
 
-# Plotting to visualize the results
+# Adding fitted values to the DataFrame for visualization
+df['Fitted_Values'] = results.fittedvalues
+
+# Plotting to visualize the results for the last month (April 2024)
 plt.figure(figsize=(10, 6))
-plt.scatter(df['Last_4_Quarters_Premature'], df['Total_Amount'], alpha=0.5, label='Data Points')
-plt.plot(df['Last_4_Quarters_Premature'], results.fittedvalues, color='red', label='WLS Fit')
-plt.xlabel('Last 4 Quarters Premature Amount')
+last_month_data = df[df['Date'] == '2024-04-30']
+plt.scatter(last_month_data['Premature_Amount'], last_month_data['Total_Amount'], label='Data Points', alpha=0.5)
+plt.plot(last_month_data['Premature_Amount'], last_month_data['Fitted_Values'], color='red', label='WLS Fit')
+plt.xlabel('Premature Amount')
 plt.ylabel('Total Amount')
-plt.title('Weighted Least Squares Regression')
+plt.title('Weighted Least Squares Regression for April 2024')
 plt.legend()
 plt.show()
