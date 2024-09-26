@@ -1,0 +1,55 @@
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+
+# Set random seed for reproducibility
+np.random.seed(42)
+
+# Create a dummy dataset
+# Generate monthly dates for 4 years
+dates = pd.date_range(start='2019-01-01', periods=48, freq='M')
+
+# Create 20 buckets
+num_buckets = 20
+data = {
+    'Date': np.tile(dates, num_buckets),
+    'Bucket': np.repeat([f'Bucket_{i+1}' for i in range(num_buckets)], len(dates)),
+    'Total_Amount': np.random.randint(10000, 50000, size=num_buckets * len(dates)),
+    'Premature_Amount': np.random.randint(1000, 10000, size=num_buckets * len(dates))
+}
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# Calculate average premature amount for the last 4 quarters
+df['Last_4_Quarters_Premature'] = df.groupby('Bucket')['Premature_Amount'].transform(lambda x: x.rolling(window=12, min_periods=1).sum())
+
+# Define the dependent and independent variables
+# We will predict the total amount based on the premature amount
+X = df['Last_4_Quarters_Premature']
+y = df['Total_Amount']
+
+# Create weights - give more weight to the last four quarters
+# More recent months get higher weights
+weights = np.linspace(1, 2, len(X))  # Assign increasing weights
+
+# Add constant for intercept in regression
+X = sm.add_constant(X)
+
+# Fit Weighted Least Squares model
+model = sm.WLS(y, X, weights=weights)
+results = model.fit()
+
+# Print the summary of the model
+print(results.summary())
+
+# Plotting to visualize the results
+plt.figure(figsize=(10, 6))
+plt.scatter(df['Last_4_Quarters_Premature'], df['Total_Amount'], alpha=0.5, label='Data Points')
+plt.plot(df['Last_4_Quarters_Premature'], results.fittedvalues, color='red', label='WLS Fit')
+plt.xlabel('Last 4 Quarters Premature Amount')
+plt.ylabel('Total Amount')
+plt.title('Weighted Least Squares Regression')
+plt.legend()
+plt.show()
