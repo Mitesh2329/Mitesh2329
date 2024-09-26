@@ -22,28 +22,28 @@ data = {
 # Create DataFrame
 df = pd.DataFrame(data)
 
-# Define weights for the last 4 quarters, increase weights for recent months
-def calculate_weights(date):
-    # Give more weight to recent months
+# Create a recency weight variable
+# Define weights based on recency (more weight for recent months)
+def calculate_recency_weight(date):
     if date >= pd.Timestamp('2023-01-31'):
-        return 1.5  # Last 4 quarters (latest 12 months)
+        return 3.0  # Last year (latest 12 months)
     elif date >= pd.Timestamp('2022-01-31'):
-        return 1.2  # Previous year
+        return 1.5  # Previous year
     else:
         return 1.0  # Older data
 
 # Apply the weights based on date
-df['Weights'] = df['Date'].apply(calculate_weights)
+df['Weights'] = df['Date'].apply(calculate_recency_weight)
 
 # Define the dependent and independent variables
 # We will predict the total amount based on the premature amount
-X = df[['Premature_Amount', 'Weights']]
+X = df[['Premature_Amount']]
 y = df['Total_Amount']
 
 # Add constant for intercept in regression
 X = sm.add_constant(X)
 
-# Fit Weighted Least Squares model
+# Fit Weighted Ordinary Least Squares model
 model = sm.WLS(y, X, weights=df['Weights'])
 results = model.fit()
 
@@ -60,6 +60,6 @@ plt.scatter(last_month_data['Premature_Amount'], last_month_data['Total_Amount']
 plt.plot(last_month_data['Premature_Amount'], last_month_data['Fitted_Values'], color='red', label='WLS Fit')
 plt.xlabel('Premature Amount')
 plt.ylabel('Total Amount')
-plt.title('Weighted Least Squares Regression for April 2024')
+plt.title('Weighted Ordinary Least Squares Regression with Recency Effect for April 2024')
 plt.legend()
 plt.show()
