@@ -1,0 +1,74 @@
+
+
+Slide 1: What is GARCH?
+
+Generalized Autoregressive Conditional Heteroskedasticity (GARCH) is a statistical model that helps us analyze time series data, especially when the variability (volatility) changes over time.
+
+Layman Explanation: GARCH helps in predicting how much data fluctuates (volatility) over time, not just the average value. For example, in financial markets, prices can be stable for a while, then suddenly become very volatile. GARCH captures these patterns.
+
+Technical Insight: The GARCH model is built on two key components:
+
+1. Autoregressive (AR): It considers past values of the data (e.g., past redemption rates) to predict future values.
+
+
+2. Conditional Heteroskedasticity (CH): It models the changing variability (volatility) in data over time by using past errors (sudden changes).
+
+
+
+
+
+---
+
+Slide 2: Why Use GARCH for TDRR?
+
+Why GARCH Works for Term Deposit Redemption Rate:
+
+Layman Explanation: In term deposits, redemption rates might be stable for some time but can suddenly become volatile due to external factors like interest rate changes or economic downturns. GARCH helps to model these shifts in stability, predicting both when and how volatile redemption rates will be.
+
+Technical Insight:
+
+1. Volatility Clustering: GARCH models capture the fact that periods of high redemption can follow periods of low redemption. This can help predict sudden spikes or dips in TDRR.
+
+
+2. Long-term Forecasting: By understanding how volatility behaves, GARCH can give better predictions on redemption rates in future months/quarters, which is essential for bank liquidity planning.
+
+
+3. Risk Management: Since volatility impacts bank reserves and liquidity, GARCH helps in assessing when high redemption risk might occur.
+
+
+
+
+Parameters Used:
+
+1. p (AR order): How many past redemption rate values to consider.
+
+
+2. q (MA order): How many past volatility values to consider.
+
+
+3. ω (Constant): The base level of volatility.
+
+
+4. α, β (Weights): How strongly past errors or volatilities impact current volatility.
+
+
+
+
+---
+
+Slide 3: GARCH's Impact on TDRR Modeling
+
+Impact of Using GARCH for TDRR:
+
+Layman Explanation: GARCH will improve how accurately banks can predict future term deposit redemptions, especially during volatile periods. This means better financial planning and risk management, ensuring that banks have enough liquidity to cover unexpected redemption spikes.
+
+Technical Insight:
+
+1. Better Volatility Forecasting: GARCH helps identify when redemption rates are likely to become unpredictable or volatile.
+
+
+2. Improved Decision-Making: Using GARCH provides more reliable predictions, helping banks adjust interest rates, plan liquidity, and manage reserves.
+
+
+3. Scenario Analysis: GARCH allows testing different scenarios (like economic downturns) and their potential impact on term deposit redemptions.
+
