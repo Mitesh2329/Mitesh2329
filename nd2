@@ -1,0 +1,10 @@
+Stable and Non-Stable Portion
+
+The stable portion represents deposits likely to remain on the bank’s balance sheet, serving as a long-term funding source, while the non-stable portion captures fluctuations and is allocated to the overnight (O/N) bucket.
+
+1. Moving Averages:
+The stable portion is calculated as the moving average of balances, and the non-stable portion is the difference from the total balance. However, this approach lacks statistical grounding and is subjective in defining the look-back period.
+
+2. Normal Distribution:
+A more robust method is based on normal distribution properties. By calculating the mean and standard deviation of historical balances and using a 99% confidence interval, the stable portion is determined. The exponential of this value represents the stable portion, with the remainder classified as non-stable.
+
