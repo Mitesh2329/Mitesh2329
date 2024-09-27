@@ -2,23 +2,28 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
-from sklearn.metrics import mean_squared_error
+from statsmodels.tsa.stattools import adfuller
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-# Step 1: Simulate 5 years (60 months) of premature deposit percentage data
+# Step 1: Simulate 5 years (60 months) of premature deposit percentage data using log-normal distribution
 np.random.seed(42)
 months = 60
-data = np.random.normal(loc=10, scale=2, size=months)  # Simulating around 10% with some volatility
+data = np.random.lognormal(mean=np.log(10), sigma=0.5, size=months)  # Simulating around 10% with some volatility
 
 # Creating a DataFrame for the simulated data
 dates = pd.date_range(start="2019-01-01", periods=months, freq="M")
 df = pd.DataFrame(data, index=dates, columns=["Premature_Deposit_%"])
 
-# Step 2: Apply ARIMA model to forecast the next 6 months
-train_data = df['Premature_Deposit_%']
+# Step 2: Check for stationarity
+result = adfuller(df['Premature_Deposit_%'])
+print(f'ADF Statistic: {result[0]}')
+print(f'p-value: {result[1]}')
 
-# Fit the ARIMA model
-model = ARIMA(train_data, order=(1, 1, 1))  # (p,d,q) ARIMA parameters can be optimized
+# Differencing to make data stationary if needed
+df['Differenced'] = df['Premature_Deposit_%'].diff().dropna()
+
+# Step 3: Fit the ARIMA model (using (1,1,1) as a starting point)
+model = ARIMA(df['Premature_Deposit_%'], order=(1, 1, 1))  # p, d, q can be optimized
 model_fit = model.fit()
 
 # Forecast the next 6 months
@@ -28,7 +33,7 @@ forecast = model_fit.forecast(steps=6)
 forecast_dates = pd.date_range(start=dates[-1] + pd.DateOffset(months=1), periods=6, freq='M')
 forecast_df = pd.DataFrame(forecast, index=forecast_dates, columns=["Forecasted_Premature_Deposit_%"])
 
-# Step 3: Visualize the original data and the forecasted values
+# Step 4: Visualize the original data and the forecasted values
 plt.figure(figsize=(10, 6))
 plt.plot(df.index, df["Premature_Deposit_%"], label="Historical Data", color='blue')
 plt.plot(forecast_df.index, forecast_df["Forecasted_Premature_Deposit_%"], label="Forecasted Data", color='red')
@@ -37,12 +42,13 @@ plt.xlabel('Date')
 plt.ylabel('Premature Deposit %')
 plt.legend()
 plt.grid(True)
+plt.axhline(y=0, color='black', linestyle='--')
 plt.show()
 
 # Print Forecasted Values
 print(forecast_df)
 
-# Step 4: Evaluate model performance
+# Step 5: Evaluate model performance (optional)
 # Split data into train and test (use last 12 months for testing)
 train_size = int(len(df) * 0.8)
 train, test = df['Premature_Deposit_%'][:train_size], df['Premature_Deposit_%'][train_size:]
@@ -53,6 +59,6 @@ model_fit = model.fit()
 
 # Forecast the test period and compare
 test_forecast = model_fit.forecast(steps=len(test))
-test_mse = mean_squared_error(test, test_forecast)
+mse = np.mean((test - test_forecast) ** 2)
 
-print(f"Mean Squared Error of the ARIMA model: {test_mse:.4f}")
+print(f"Mean Squared Error of the ARIMA model: {mse:.4f}")
