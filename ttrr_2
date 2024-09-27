@@ -1,0 +1,58 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from sklearn.metrics import mean_squared_error
+
+# Step 1: Simulate 5 years (60 months) of premature deposit percentage data
+np.random.seed(42)
+months = 60
+data = np.random.normal(loc=10, scale=2, size=months)  # Simulating around 10% with some volatility
+
+# Creating a DataFrame for the simulated data
+dates = pd.date_range(start="2019-01-01", periods=months, freq="M")
+df = pd.DataFrame(data, index=dates, columns=["Premature_Deposit_%"])
+
+# Step 2: Apply ARIMA model to forecast the next 6 months
+train_data = df['Premature_Deposit_%']
+
+# Fit the ARIMA model
+model = ARIMA(train_data, order=(1, 1, 1))  # (p,d,q) ARIMA parameters can be optimized
+model_fit = model.fit()
+
+# Forecast the next 6 months
+forecast = model_fit.forecast(steps=6)
+
+# Add the forecasted values to the original data
+forecast_dates = pd.date_range(start=dates[-1] + pd.DateOffset(months=1), periods=6, freq='M')
+forecast_df = pd.DataFrame(forecast, index=forecast_dates, columns=["Forecasted_Premature_Deposit_%"])
+
+# Step 3: Visualize the original data and the forecasted values
+plt.figure(figsize=(10, 6))
+plt.plot(df.index, df["Premature_Deposit_%"], label="Historical Data", color='blue')
+plt.plot(forecast_df.index, forecast_df["Forecasted_Premature_Deposit_%"], label="Forecasted Data", color='red')
+plt.title('Premature Deposit Percentage Forecast')
+plt.xlabel('Date')
+plt.ylabel('Premature Deposit %')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Print Forecasted Values
+print(forecast_df)
+
+# Step 4: Evaluate model performance
+# Split data into train and test (use last 12 months for testing)
+train_size = int(len(df) * 0.8)
+train, test = df['Premature_Deposit_%'][:train_size], df['Premature_Deposit_%'][train_size:]
+
+# Fit the model on train data
+model = ARIMA(train, order=(1, 1, 1))
+model_fit = model.fit()
+
+# Forecast the test period and compare
+test_forecast = model_fit.forecast(steps=len(test))
+test_mse = mean_squared_error(test, test_forecast)
+
+print(f"Mean Squared Error of the ARIMA model: {test_mse:.4f}")
