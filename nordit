@@ -1,0 +1,104 @@
+To perform the classification of non-maturing deposits (NMDs) into stable and non-stable portions using a normal distribution method, let's walk through the steps using an example.
+
+Key Terms:
+
+1. Mean (μ): This represents the average value of the monthly balances over time.
+
+
+2. Standard Deviation (σ): This measures how much the balances fluctuate from the mean.
+
+
+3. Z-Score (Z): The number of standard deviations a data point (monthly balance) is from the mean.
+
+
+4. Confidence Interval: For a 99% confidence interval, the Z-value is 2.33, meaning we are confident that 99% of the data falls within this range.
+
+
+
+Steps:
+
+1. Logarithmic Returns of Monthly Balances:
+
+First, we need to calculate the monthly log returns to measure the rate of change. This is computed as:
+
+\text{Log Return} = \ln\left(\frac{\text{Current Month's Balance}}{\text{Previous Month's Balance}}\right)
+
+2. Calculate Mean (μ) and Standard Deviation (σ):
+
+After calculating the log returns for several months, calculate the mean and standard deviation:
+
+\mu = \text{Average of Log Returns}
+
+\sigma = \text{Standard Deviation of Log Returns} ]
+
+3. Find X for 99% Confidence Interval:
+
+Use the Z-score value of 2.33 for the 99% confidence interval. The stable portion is computed as:
+
+X = \mu - 2.33 \times \sigma
+
+This value  represents the threshold balance for the stable portion.
+
+4. Calculate Exponential of X (Stable Portion):
+
+The stable portion of the deposits is found by taking the exponential of :
+
+\text{Stable Portion} = e^X
+
+This stable portion represents the percentage of the deposits that are considered stable.
+
+5. Non-Stable (Volatile) Portion:
+
+The non-stable portion is simply the remainder of the deposits, calculated as:
+
+\text{Non-Stable Portion} = 1 - \text{Stable Portion}
+
+
+---
+
+Example:
+
+Let’s assume we have monthly balances for a deposit over 5 months:
+
+Step 1: Calculate Log Returns
+
+\text{Feb Log Return} = \ln\left(\frac{1,02,000}{1,00,000}\right) = \ln(1.02) = 0.0198
+
+\text{Mar Log Return} = \ln\left(\frac{1,01,000}{1,02,000}\right) = \ln(0.99) = -0.00995 ] Repeat for all months.
+
+Step 2: Mean (μ) and Standard Deviation (σ) of Log Returns
+
+\mu = \frac{0.0198 + (-0.00995) + 0.0196 + (-0.00488)}{4} = 0.00665
+
+\sigma = \sqrt{\frac{(0.0198 - 0.00665)^2 + (-0.00995 - 0.00665)^2 + \dots}{4}} = 0.0145 ]
+
+Step 3: Calculate X for 99% Confidence Interval
+
+Using Z = 2.33 for a 99% confidence interval:
+
+X = \mu - 2.33 \times \sigma = 0.00665 - 2.33 \times 0.0145 = 0.00665 - 0.0338 = -0.02715
+
+Step 4: Calculate Stable Portion
+
+The stable portion of the deposits is the exponential of X:
+
+\text{Stable Portion} = e^{-0.02715} = 0.9732 \text{ or 97.32%}
+
+Step 5: Calculate Non-Stable Portion
+
+\text{Non-Stable Portion} = 1 - 0.9732 = 0.0268 \text{ or 2.68%}
+
+
+---
+
+Summary (Layman Explanation):
+
+1. Stable deposits are those that are unlikely to move much, even with changes in interest rates or the economy. In this example, 97.32% of the deposits are stable.
+
+
+2. Non-stable deposits are more volatile, meaning they may move significantly if something in the market changes. In this case, only 2.68% of the deposits are non-stable.
+
+
+
+By using this normal distribution method, the bank can determine how much of its deposits are "safe" and stable under normal conditions, and how much could fluctuate in response to external events.
+
