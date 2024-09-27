@@ -1,0 +1,73 @@
+# Install necessary libraries
+!pip install arch numpy pandas matplotlib
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from arch import arch_model
+
+# 1. Create a sample dataset
+data = {
+    'Date': pd.date_range(start='2020-01-01', periods=100, freq='M'),
+    'Deposit_Amount': np.random.normal(loc=1000000, scale=50000, size=100),
+    'Premature_Withdrawal_Percent': np.random.uniform(low=0.02, high=0.08, size=100)  # 2% to 8% withdrawals
+}
+
+df = pd.DataFrame(data)
+df.set_index('Date', inplace=True)
+
+# 2. Calculate log returns for premature withdrawal percentage
+df['Log_Returns'] = np.log(df['Premature_Withdrawal_Percent'] / df['Premature_Withdrawal_Percent'].shift(1))
+df.dropna(inplace=True)  # Remove any NaN values caused by shifting
+
+# 3. Plot the premature withdrawal percentages and log returns
+plt.figure(figsize=(12, 6))
+
+plt.subplot(2, 1, 1)
+plt.plot(df.index, df['Premature_Withdrawal_Percent'], color='blue')
+plt.title('Premature Withdrawal Percentage Over Time')
+
+plt.subplot(2, 1, 2)
+plt.plot(df.index, df['Log_Returns'], color='red')
+plt.title('Log Returns of Premature Withdrawal Percent')
+plt.tight_layout()
+plt.show()
+
+# 4. Fit a GARCH(1,1) model on log returns
+model = arch_model(df['Log_Returns'], vol='Garch', p=1, q=1)
+garch_fit = model.fit(disp='off')
+
+# 5. Print GARCH model summary
+print(garch_fit.summary())
+
+# 6. Plot conditional volatility and standardized residuals
+plt.figure(figsize=(12, 6))
+
+plt.subplot(2, 1, 1)
+plt.plot(garch_fit.conditional_volatility, color='green')
+plt.title('Conditional Volatility from GARCH Model')
+
+plt.subplot(2, 1, 2)
+plt.plot(garch_fit.resid / garch_fit.conditional_volatility, color='orange')
+plt.title('Standardized Residuals')
+plt.tight_layout()
+plt.show()
+
+# 7. Forecast volatility for the next 10 periods
+forecasts = garch_fit.forecast(horizon=10)
+forecasted_variance = forecasts.variance[-1:]
+forecasted_volatility = np.sqrt(forecasted_variance)
+
+# Print forecasted volatility
+print("Forecasted Volatility for next 10 periods:")
+print(forecasted_volatility)
+
+# 8. Backtesting: Compare actual vs forecasted volatility (using last 10 periods of actual data)
+actual_volatility = df['Log_Returns'][-10:]  # Hypothetical test data
+
+plt.figure(figsize=(10, 6))
+plt.plot(actual_volatility.index, actual_volatility, label='Actual Volatility', color='blue')
+plt.plot(actual_volatility.index, forecasted_volatility.T, label='Forecasted Volatility', color='red', linestyle='--')
+plt.title('Actual vs Forecasted Volatility')
+plt.legend()
+plt.show()
