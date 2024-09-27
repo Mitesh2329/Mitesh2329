@@ -1,0 +1,25 @@
+import pandas as pd
+import numpy as np
+from statsmodels.tsa.arima.model import ARIMA
+import matplotlib.pyplot as plt
+
+# Load your data
+data = pd.DataFrame({
+    'Month': pd.date_range(start='2018-01-01', periods=60, freq='M'),
+    'Deposit Balance': np.random.randint(1500, 2000, size=60),  # Replace with actual data
+    'Premature Closure': np.random.uniform(1.5, 2.5, size=60)  # Replace with actual data
+})
+data.set_index('Month', inplace=True)
+
+# Fit ARIMA model
+model = ARIMA(data['Deposit Balance'], order=(1, 1, 1))
+model_fit = model.fit()
+
+# Forecast for the next 12 months
+forecast = model_fit.forecast(steps=12)
+print(forecast)
+
+# Plot results
+data['Deposit Balance'].plot(label='Historical', legend=True)
+forecast.plot(label='Forecast', legend=True)
+plt.show()
