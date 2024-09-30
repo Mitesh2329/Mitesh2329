@@ -1,0 +1,83 @@
+# Import necessary libraries
+import yfinance as yf  # For fetching stock data
+import pandas as pd    # For data manipulation
+import numpy as np     # For numerical operations
+import matplotlib.pyplot as plt  # For plotting
+from arch import arch_model  # For GARCH modeling
+from statsmodels.tsa.stattools import adfuller  # For stationarity test (ADF test)
+
+# Fetching Tata Motors stock data from Yahoo Finance
+# Using 'TATAMOTORS.NS' as ticker for Tata Motors in NSE (National Stock Exchange)
+data = yf.download('TATAMOTORS.NS', start='2022-01-01', end='2024-09-30')
+
+# Display the first few rows of the data to inspect it
+print(data.head())
+
+# Step 1: Preprocessing and Calculating Log Returns
+# We use log returns because they stabilize variance and help make the time series stationary.
+data['Log_Returns'] = np.log(data['Adj Close'] / data['Adj Close'].shift(1))
+
+# Dropping any rows with missing values (if any)
+data.dropna(inplace=True)
+
+# Plotting the log returns
+plt.figure(figsize=(10,6))
+plt.plot(data['Log_Returns'])
+plt.title('Tata Motors Log Returns')
+plt.show()
+
+# Step 2: Checking Stationarity with the ADF Test (Augmented Dickey-Fuller Test)
+# A stationary time series is required for GARCH modeling
+adf_result = adfuller(data['Log_Returns'])
+
+print(f'ADF Statistic: {adf_result[0]}')
+print(f'p-value: {adf_result[1]}')
+
+# If the p-value is less than 0.05, we reject the null hypothesis and conclude that the series is stationary.
+
+# Step 3: Fitting a GARCH(1,1) model
+# GARCH(1,1) model assumes that volatility is dependent on the past squared returns and past volatility.
+# We'll use the arch package to fit the model
+model = arch_model(data['Log_Returns'], vol='Garch', p=1, q=1)
+
+# Fitting the model to the data
+garch_result = model.fit()
+
+# Output the model summary (this includes parameters, AIC, BIC, etc.)
+print(garch_result.summary())
+
+# Step 4: Diagnostic Plots
+# Checking the residuals for normality and autocorrelation to validate the model
+
+# Plotting the standardized residuals (should resemble white noise)
+plt.figure(figsize=(10,6))
+plt.plot(garch_result.std_resid)
+plt.title('Standardized Residuals')
+plt.show()
+
+# Checking the autocorrelation of residuals using ACF plot
+from statsmodels.graphics.tsaplots import plot_acf
+plot_acf(garch_result.resid, lags=20)
+plt.show()
+
+# Step 5: Validation Parameters - AIC, BIC
+# Lower AIC and BIC values indicate a better model fit
+print(f'AIC: {garch_result.aic}')
+print(f'BIC: {garch_result.bic}')
+
+# Step 6: Forecasting Future Volatility
+# Forecasting volatility for the next 10 days
+forecast = garch_result.forecast(horizon=10)
+
+# Extracting the variance forecast (which is the squared volatility)
+forecast_variance = forecast.variance[-1:]
+
+# Converting variance to volatility (standard deviation)
+forecast_volatility = np.sqrt(forecast_variance)
+
+print("Forecasted Volatility for the next 10 days:")
+print(forecast_volatility)
+
+# Step 7: Conclusion and Interpretation
+# The forecasted volatility gives us an idea of the future uncertainty in Tata Motors' stock price.
+# Higher volatility forecasts indicate more potential for significant price movements.
