@@ -1,0 +1,90 @@
+AIC (Akaike Information Criterion) and BIC (Bayesian Information Criterion)
+
+Both AIC and BIC are used to evaluate the goodness of fit of statistical models while penalizing for model complexity. Lower values of AIC or BIC indicate a better-fitting model.
+
+What They Do:
+
+AIC: Measures the quality of a model relative to others, with a penalty for the number of parameters in the model. It's used to balance model fit and complexity.
+
+Formula: 
+
+ is the number of parameters.
+
+ is the likelihood of the model.
+
+
+Lower AIC values indicate a better model fit.
+
+
+BIC: Similar to AIC but penalizes more strongly for the number of parameters, which helps avoid overfitting when comparing models.
+
+Formula: 
+
+ is the number of data points.
+
+
+Like AIC, lower BIC values indicate a better model.
+
+
+
+Ranges for AIC/BIC and Interpretation:
+
+AIC/BIC values don't have a specific absolute "range" like p-values or ADF statistics. Instead, they're relative to different models.
+
+The model with the lowest AIC/BIC value is preferred.
+
+A difference of 10 or more between models is considered substantial.
+
+
+
+Example Interpretation:
+
+AIC = -3448, BIC = -3430:
+
+Both values are negative, indicating a relatively good model fit (assuming we're comparing different models).
+
+AIC being lower than BIC: Indicates that the model is well-fitted, but the BIC penalizes more for complexity (BIC tends to favor simpler models).
+
+If AIC and BIC values are close (like in this case), it indicates a balanced model that isn't overfitting.
+
+
+
+What if These Values Indicate Poor Fit?
+
+If the AIC and BIC are high (relative to other models) or not good enough, the following actions can help improve the model:
+
+1. Transformation of Data:
+
+If the data is non-stationary, try differencing or applying logarithmic or power transformations.
+
+Handling seasonality explicitly with SARIMA if there are seasonal patterns.
+
+
+
+2. Simplifying the Model:
+
+Too many parameters can lead to overfitting (high AIC/BIC). Try reducing the complexity of the model (e.g., reducing AR, MA terms in ARIMA).
+
+
+
+3. Adding Exogenous Variables (for SARIMAX):
+
+If there are external factors affecting the series, incorporating them as exogenous variables might improve the fit.
+
+
+
+4. Re-evaluating Lag Structure:
+
+Incorrect lag lengths in time series models can lead to a poor fit. Adjust lags based on autocorrelation and partial autocorrelation plots.
+
+
+
+5. Regularization:
+
+In some cases, applying regularization techniques like LASSO can help reduce overfitting by shrinking coefficients of less important features.
+
+
+
+
+In summary, the AIC and BIC are both tools for comparing models. In your case, with AIC = -3448 and BIC = -3430, it seems the model is performing well (since lower is better), but there's a slight complexity penalty from BIC. If needed, simplifying the model could further reduce the BIC value.
+
