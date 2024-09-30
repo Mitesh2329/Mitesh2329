@@ -1,0 +1,25 @@
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+import arch
+
+# Sample data: Generate some synthetic stock price returns
+np.random.seed(42)
+returns = np.random.normal(0, 1, 1000)  # Simulated daily returns
+
+# Fit a GARCH(1,1) model
+model = arch.arch_model(returns, vol='Garch', p=1, q=1)
+garch_fit = model.fit()
+
+# 1. Ljung-Box Test
+ljung_box_test = sm.stats.acorr_ljungbox(garch_fit.resid, lags=[10], return_df=True)
+print("Ljung-Box Test:\n", ljung_box_test)
+
+# 2. ARCH Test
+from statsmodels.stats.diagnostic import het_arch
+arch_test = het_arch(garch_fit.resid)
+print("ARCH Test:\n", arch_test)
+
+# 3. Normality Test (Jarque-Bera Test)
+jb_test = sm.stattools.jarque_bera(garch_fit.resid)
+print("Jarque-Bera Test:\n", jb_test)
