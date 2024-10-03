@@ -1,0 +1,69 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# Sample Data Creation (you can replace this with actual data)
+data = {
+    'Customer_ID': range(1, 101),
+    'Age': np.random.randint(18, 70, size=100),
+    'Annual_Income': np.random.randint(100000, 3000000, size=100),
+    'Transaction_Volume': np.random.randint(10, 200, size=100),  # Total transaction count per year
+    'City_Tier': np.random.choice([1, 2, 3], size=100)  # City tier as a demographic variable
+}
+
+# Creating DataFrame
+df = pd.DataFrame(data)
+
+# Feature Selection (excluding Customer_ID for clustering)
+features = ['Age', 'Annual_Income', 'Transaction_Volume', 'City_Tier']
+
+# Scaling the data (necessary for KMeans)
+scaler = StandardScaler()
+scaled_features = scaler.fit_transform(df[features])
+
+# Applying KMeans Clustering
+kmeans = KMeans(n_clusters=3, random_state=42)  # 3 clusters as an example
+df['Cluster'] = kmeans.fit_predict(scaled_features)
+
+# Inverse transform cluster centers to get them in original scale
+cluster_centers = scaler.inverse_transform(kmeans.cluster_centers_)  # Convert scaled centers back to original values
+df_clusters = pd.DataFrame(cluster_centers, columns=features)
+
+# Function to get the range for each feature in each cluster
+def get_cluster_ranges(cluster_data):
+    ranges = {}
+    for feature in features:
+        ranges[feature] = {
+            'min': cluster_data[feature].min(),
+            'max': cluster_data[feature].max(),
+            'mean': cluster_data[feature].mean()
+        }
+    return ranges
+
+# Displaying Cluster Characteristics
+for i in range(3):  # Loop through each cluster
+    print(f"\nCluster {i} Characteristics:")
+    cluster_data = df[df['Cluster'] == i]
+    cluster_ranges = get_cluster_ranges(cluster_data)
+    
+    # Print ranges for each feature in the cluster
+    for feature, range_data in cluster_ranges.items():
+        print(f"{feature}: Range [{range_data['min']}, {range_data['max']}], Mean: {range_data['mean']}")
+
+# Visualizing Clusters (2D Plot for simplicity using Age and Income)
+plt.figure(figsize=(8, 6))
+plt.scatter(df['Age'], df['Annual_Income'], c=df['Cluster'], cmap='viridis', label='Clusters')
+plt.xlabel('Age')
+plt.ylabel('Annual Income')
+plt.title('Customer Segmentation Based on Age and Annual Income')
+plt.colorbar(label='Cluster')
+plt.show()
+
+# Display sample clustered data
+print(df.head())
+
+# Checking the count of customers in each cluster
+cluster_summary = df.groupby('Cluster').size()
+print("Customers in Each Cluster:\n", cluster_summary)
