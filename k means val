@@ -1,0 +1,38 @@
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Let's assume 'scaled_features' is the scaled dataset from the previous step
+
+# Applying KMeans Clustering (again, if needed)
+kmeans = KMeans(n_clusters=3, random_state=42)
+df['Cluster'] = kmeans.fit_predict(scaled_features)
+
+# 1. Silhouette Score (for k=3 clusters)
+silhouette_avg = silhouette_score(scaled_features, df['Cluster'])
+print(f"Silhouette Score: {silhouette_avg:.4f}")
+
+# 2. Elbow Method (to determine the optimal number of clusters)
+inertia = []
+K_range = range(1, 10)  # Checking cluster numbers from 1 to 10
+for k in K_range:
+    kmeans_model = KMeans(n_clusters=k, random_state=42)
+    kmeans_model.fit(scaled_features)
+    inertia.append(kmeans_model.inertia_)
+
+# Plotting the Elbow graph
+plt.figure(figsize=(8, 6))
+plt.plot(K_range, inertia, 'bo-')
+plt.xlabel('Number of Clusters (k)')
+plt.ylabel('Inertia (Sum of Squared Distances)')
+plt.title('Elbow Method for Optimal k')
+plt.show()
+
+# 3. Davies-Bouldin Score
+db_score = davies_bouldin_score(scaled_features, df['Cluster'])
+print(f"Davies-Bouldin Index: {db_score:.4f}")
+
+# 4. Cluster Size (how many points in each cluster)
+cluster_sizes = df['Cluster'].value_counts()
+print(f"Cluster Sizes:\n{cluster_sizes}")
