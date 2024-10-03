@@ -45,3 +45,111 @@ print(df.head())
 # Checking the count of customers in each cluster
 cluster_summary = df.groupby('Cluster').size()
 print("Customers in Each Cluster:\n", cluster_summary)
+
+
+#2
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def kmeans_clustering_automation(df, features, k_range=(2, 10)):
+    """
+    Perform K-means clustering, find the optimal number of clusters based on silhouette score,
+    and return the best clustering result along with validation metrics.
+    
+    Parameters:
+    df (DataFrame): Input data containing features for clustering.
+    features (list): List of feature names to be used for clustering.
+    k_range (tuple): Range of k values (clusters) to try.
+    
+    Returns:
+    df (DataFrame): DataFrame with an additional 'Cluster' column indicating the assigned cluster.
+    best_k (int): Best number of clusters based on silhouette score.
+    metrics (dict): Validation metrics including silhouette score, Davies-Bouldin Index, and inertia.
+    """
+    
+    # Step 1: Standardize the features
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(df[features])
+    
+    # Initialize lists to store results
+    silhouette_scores = []
+    db_scores = []
+    inertias = []
+    
+    # Step 2: Loop through the range of k values to find the best one
+    for k in range(k_range[0], k_range[1] + 1):
+        kmeans = KMeans(n_clusters=k, init='k-means++', n_init=10, random_state=42)
+        labels = kmeans.fit_predict(scaled_features)
+        
+        # Calculate silhouette score
+        silhouette_avg = silhouette_score(scaled_features, labels)
+        silhouette_scores.append(silhouette_avg)
+        
+        # Calculate Davies-Bouldin Index
+        db_index = davies_bouldin_score(scaled_features, labels)
+        db_scores.append(db_index)
+        
+        # Save inertia (sum of squared distances to nearest cluster center)
+        inertias.append(kmeans.inertia_)
+    
+    # Step 3: Select the k with the highest silhouette score
+    best_k = np.argmax(silhouette_scores) + k_range[0]
+    
+    # Step 4: Apply KMeans with the best k
+    best_kmeans = KMeans(n_clusters=best_k, init='k-means++', n_init=10, random_state=42)
+    df['Cluster'] = best_kmeans.fit_predict(scaled_features)
+    
+    # Calculate final metrics
+    silhouette_avg = silhouette_score(scaled_features, df['Cluster'])
+    db_index = davies_bouldin_score(scaled_features, df['Cluster'])
+    inertia = best_kmeans.inertia_
+    
+    metrics = {
+        'Silhouette Score': silhouette_avg,
+        'Davies-Bouldin Index': db_index,
+        'Inertia': inertia,
+        'Best K': best_k
+    }
+    
+    # Step 5: Print cluster summary
+    print(f"Optimal number of clusters: {best_k}")
+    print(f"Silhouette Score: {silhouette_avg:.4f}")
+    print(f"Davies-Bouldin Index: {db_index:.4f}")
+    print(f"Inertia: {inertia}")
+    
+    # Step 6: Plot Elbow and Silhouette Score Graphs
+    plt.figure(figsize=(12, 6))
+    
+    # Elbow Plot (Inertia)
+    plt.subplot(1, 2, 1)
+    plt.plot(range(k_range[0], k_range[1] + 1), inertias, 'bo-')
+    plt.xlabel('Number of Clusters (k)')
+    plt.ylabel('Inertia')
+    plt.title('Elbow Plot')
+    
+    # Silhouette Score Plot
+    plt.subplot(1, 2, 2)
+    plt.plot(range(k_range[0], k_range[1] + 1), silhouette_scores, 'go-')
+    plt.xlabel('Number of Clusters (k)')
+    plt.ylabel('Silhouette Score')
+    plt.title('Silhouette Score vs Number of Clusters')
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Step 7: Return the DataFrame with clusters, best k, and metrics
+    return df, best_k, metrics
+
+# Example usage:
+# Assuming you have a DataFrame `df` with columns like 'Age', 'Income', 'Transactions', etc.
+# Replace 'Age', 'Income', and 'Transactions' with the relevant features in your dataset.
+
+features = ['Age', 'Income', 'Transactions']  # Adjust based on your data
+df_with_clusters, best_k, validation_metrics = kmeans_clustering_automation(df, features)
+
+# Now df_with_clusters will have an additional 'Cluster' column with the assigned cluster
+# and validation_metrics will contain Silhouette Score, Davies-Bouldin Index, and inertia.
