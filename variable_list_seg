@@ -1,0 +1,250 @@
+For segmentation of Total Prepayment Rate (TPRR) and Conditional Prepayment Rate (CPR) modeling under Interest Rate Risk in the Banking Book (IRRBB) following Basel guidelines, you can create a master dataset with various variables. These variables will cover customer behavior, product characteristics, macroeconomic factors, and other key risk factors. Below is a comprehensive list of categories and variables that you should consider:
+
+1. Customer Demographics
+
+Age of Borrower
+
+Income Level
+
+Employment Type (Salaried, Self-employed)
+
+Geographic Region
+
+Credit Score
+
+Loan Tenure Remaining
+
+Borrower’s Asset Holdings
+
+Homeownership Status
+
+
+2. Loan/Product Characteristics
+
+Loan Type (Mortgage, Auto Loan, Personal Loan, etc.)
+
+Loan Amount
+
+Loan to Value Ratio (LTV)
+
+Interest Rate Type (Fixed, Variable)
+
+Interest Rate Spread (vs. market rate)
+
+Loan Origination Year
+
+Remaining Principal
+
+Amortization Type (Fully amortizing, Interest-only)
+
+Loan Term (e.g., 30 years, 15 years)
+
+Prepayment Penalty (Yes/No)
+
+Rate Reset Date (for variable-rate loans)
+
+
+3. Macroeconomic Variables
+
+Interest Rates (Current and historical)
+
+Inflation Rate
+
+Unemployment Rate
+
+Gross Domestic Product (GDP) Growth
+
+Housing Price Index (HPI)
+
+Market Volatility (VIX Index)
+
+Economic Sentiment Indicator
+
+
+4. Behavioral Variables
+
+Seasonality (Prepayment rates may vary by season)
+
+Prepayment Speed (Historical prepayment behavior of similar loans)
+
+Borrower Recency (Time since last prepayment)
+
+Frequency of Early Payments
+
+Prepayment Incentive (Difference between current and market rates)
+
+Borrower Income Growth Rate
+
+Past Prepayment Activity
+
+
+5. Loan Payment History
+
+Delinquency Status
+
+Number of Late Payments
+
+Payment Frequency (Weekly, Monthly)
+
+Overpayment Patterns (If the borrower makes extra payments)
+
+Partial Prepayments (Yes/No)
+
+
+6. Loan Purpose
+
+Home Purchase
+
+Refinance
+
+Investment Property
+
+Renovation
+
+Debt Consolidation
+
+
+7. Prepayment Triggers
+
+Interest Rate Changes (Rate decrease/increase triggers prepayments)
+
+Employment Changes (Job loss, job change)
+
+Divorce/Marriage
+
+Inheritance or Financial Windfall
+
+Relocation
+
+
+8. Market Conditions
+
+Current Mortgage Rates (vs. historical averages)
+
+Housing Market Liquidity (Ease of selling property)
+
+Mortgage Rate Expectations
+
+Availability of Credit (Ease of refinancing)
+
+
+9. Institutional Factors
+
+Bank Policies on Early Payments
+
+Regulatory Changes (New rules affecting prepayment penalties)
+
+Government Incentives (Subsidies, tax incentives for prepayment)
+
+Cost of Refinancing (Fees and charges associated with prepayment)
+
+Bank Marketing Offers (Promotions for refinancing)
+
+
+10. Product Lifecycle Variables
+
+Loan Age (How old is the loan?)
+
+Remaining Loan Tenor
+
+Contractual Maturity
+
+Cohort Year (Year the loan was issued)
+
+Expected Cash Flows (Discounted cash flow projections)
+
+
+11. Risk-Related Factors
+
+Loan Default Probability (PD)
+
+Expected Loss (EL)
+
+Volatility of Cash Flows (Due to rate fluctuations)
+
+Loan Book Risk Classification (High-risk, medium-risk, low-risk)
+
+
+12. Prepayment Option Variables
+
+Option Cost (Cost of prepaying loan)
+
+Option Value (Financial value of prepaying early)
+
+Rate Differential (Current loan rate vs. market rate)
+
+
+13. Time-Dependent Factors
+
+Time to Reprice (for variable-rate loans)
+
+Remaining Interest Rate Lock Period
+
+Loan Age vs. Maturity
+
+Time Since Last Prepayment
+
+
+14. External Economic Conditions
+
+Availability of Refinancing Options
+
+Government Housing Policies
+
+Consumer Confidence Index
+
+Global Economic Conditions (For countries with foreign borrowers)
+
+
+15. Basel Regulatory Variables
+
+Risk-Weighted Assets (RWA) Impact
+
+IRRBB-specific stress tests (Prescribed by Basel guidelines)
+
+Prepayment Rate Sensitivity (to interest rate shocks)
+
+Capital Adequacy Ratio Impact
+
+Impact on Earnings at Risk (EaR)
+
+Impact on Economic Value of Equity (EVE)
+
+Basel III Liquidity Ratios (LCR, NSFR)
+
+
+16. Bank-Specific Historical Data
+
+Prepayment Trends by Loan Type
+
+Historical Prepayment Rates
+
+Prepayment Seasonality
+
+Bank-Specific Prepayment Models
+
+
+
+---
+
+Modeling Approach
+
+K-Means Clustering:
+
+Use demographic, behavioral, loan, and macroeconomic variables to segment borrowers into clusters based on similar prepayment behaviors.
+
+After segmentation, you can analyze the unique characteristics of each cluster and see how they respond to changes in interest rates and other factors.
+
+
+Decision Tree Algorithm:
+
+Use a decision tree to predict prepayment likelihood (CPR or TPRR) by using the segmented clusters as features and their associated prepayment behavior.
+
+You can identify important splits such as interest rate changes, borrower credit score, or loan age that significantly affect prepayment probabilities.
+
+
+
+By capturing these variables across different segments, you will be able to identify the key drivers of prepayment under different interest rate scenarios, as required by Basel IRRBB guidelines.
+
+This comprehensive variable list will help ensure nothing is left out when you build your master dataset for TPRR and CPR modeling.
+
