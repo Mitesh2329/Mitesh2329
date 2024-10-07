@@ -1,0 +1,115 @@
+# Necessary imports
+import numpy as np
+import pandas as pd
+import random
+from sklearn.cluster import KMeans
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import classification_report, confusion_matrix, silhouette_score, accuracy_score
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+import matplotlib.pyplot as plt
+import seaborn as sns
+import missingno as msno
+
+# Step 1: Generate Synthetic Data for PSU Bank - Real Life Challenges Included
+np.random.seed(42)
+
+# Simulating real-life data challenges (240 data points)
+data_size = 240
+
+# Variables typically used for TPRR/CPR modeling in IRRBB for PSU banks
+data = {
+    'Loan_Type': np.random.choice(['Home Loan', 'Auto Loan', 'Personal Loan'], size=data_size),
+    'Loan_Amount': np.random.normal(1000000, 500000, data_size),  # Loan amount in INR
+    'Interest_Rate': np.random.uniform(6, 12, data_size),  # Interest rate between 6% and 12%
+    'LTV_Ratio': np.random.uniform(0.5, 0.9, data_size),  # Loan to Value ratio
+    'Loan_Tenure': np.random.randint(5, 30, data_size),  # Loan tenure between 5 and 30 years
+    'Income_Level': np.random.normal(50000, 20000, data_size),  # Monthly income
+    'Prepayment_Penalty': np.random.choice([0, 1], data_size, p=[0.7, 0.3]),  # Binary flag for prepayment penalty
+    'Delinquency_Status': np.random.choice([0, 1], size=data_size, p=[0.85, 0.15]),  # Binary flag for delinquency
+    'Borrower_Age': np.random.randint(25, 60, data_size),  # Age of borrower
+    'Region': np.random.choice(['Urban', 'Semi-Urban', 'Rural'], size=data_size),
+    'Loan_Origination_Year': np.random.randint(2010, 2023, size=data_size),  # Random year of origination
+    'Prepayment_Trigger': np.random.uniform(0, 1, size=data_size)  # Incentive to prepay, normalized score
+}
+
+# Converting to DataFrame
+df = pd.DataFrame(data)
+
+# Introduce some missing values to simulate real-life data challenges
+for col in ['Loan_Amount', 'Interest_Rate', 'Income_Level', 'Prepayment_Trigger']:
+    df.loc[df.sample(frac=0.1).index, col] = np.nan  # Randomly introduce 10% missing values
+
+# Step 2: Preprocessing & Data Cleaning
+# Visualize missing data
+msno.matrix(df)
+plt.show()
+
+# Filling missing numeric values with median (common banking practice)
+df.fillna(df.median(), inplace=True)
+
+# Encoding categorical variables
+le = LabelEncoder()
+df['Loan_Type'] = le.fit_transform(df['Loan_Type'])
+df['Region'] = le.fit_transform(df['Region'])
+
+# Scale the data (important for KMeans)
+scaler = StandardScaler()
+df_scaled = pd.DataFrame(scaler.fit_transform(df[['Loan_Amount', 'Interest_Rate', 'LTV_Ratio', 'Loan_Tenure', 'Income_Level', 'Prepayment_Trigger']]), columns=['Loan_Amount', 'Interest_Rate', 'LTV_Ratio', 'Loan_Tenure', 'Income_Level', 'Prepayment_Trigger'])
+
+# Handling outliers (Winsorization can be used here)
+for col in df_scaled.columns:
+    df_scaled[col] = np.clip(df_scaled[col], df_scaled[col].quantile(0.05), df_scaled[col].quantile(0.95))
+
+# Step 3: KMeans Clustering (for Segmentation)
+kmeans = KMeans(n_clusters=4, random_state=42)
+df_scaled['Cluster'] = kmeans.fit_predict(df_scaled)
+
+# Check cluster quality using Silhouette Score
+silhouette_avg = silhouette_score(df_scaled.drop('Cluster', axis=1), df_scaled['Cluster'])
+print(f'Silhouette Score: {silhouette_avg}')
+
+# Visualizing Clusters
+sns.scatterplot(x='Loan_Amount', y='Interest_Rate', hue='Cluster', data=df_scaled, palette='Set1')
+plt.title('KMeans Cluster Visualization')
+plt.show()
+
+# Step 4: Decision Tree Classification using Segments
+# Prepare the dataset for classification
+X = df_scaled.drop('Cluster', axis=1)
+y = df_scaled['Cluster']
+
+# Split the dataset into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the Decision Tree Classifier
+dtree = DecisionTreeClassifier(random_state=42)
+dtree.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = dtree.predict(X_test)
+
+# Model Validation
+print('Confusion Matrix:\n', confusion_matrix(y_test, y_pred))
+print('\nClassification Report:\n', classification_report(y_test, y_pred))
+print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
+
+# Cross-validation for model stability
+cv_scores = cross_val_score(dtree, X, y, cv=5)
+print(f'Cross-Validation Scores: {cv_scores}')
+print(f'Mean CV Accuracy: {np.mean(cv_scores)}')
+
+# Step 5: Visualization of Decision Tree
+from sklearn import tree
+
+plt.figure(figsize=(20,10))
+tree.plot_tree(dtree, filled=True, feature_names=X.columns, class_names=True)
+plt.title('Decision Tree Visualization')
+plt.show()
+
+# Conclusion:
+# - The model shows segmentation using KMeans and classification using Decision Tree.
+# - Preprocessing included scaling, encoding, outlier handling, and missing value imputation.
+# - Model validation metrics such as accuracy, confusion matrix, and cross-validation were calculated.
+# - Challenges included missing data and outliers, which were handled using standard techniques.
+# This segmentation will be used as a base for further IRRBB and ALM models.
