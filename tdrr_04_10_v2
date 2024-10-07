@@ -102,3 +102,107 @@ forecast_df = forecast_sarimax(df_total, forecast_steps=2)
 # Step 5: Display the forecasted results in table format
 print("\nFinal Forecasted Table:\n")
 print(forecast_df.to_string(index=False))
+
+
+###2 best parameter function ###
+
+import pandas as pd
+import numpy as np
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from fbprophet import Prophet
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+import itertools
+import matplotlib.pyplot as plt
+
+def evaluate_model(true, predicted):
+    rmse = np.sqrt(mean_squared_error(true, predicted))
+    mae = mean_absolute_error(true, predicted)
+    mape = np.mean(np.abs((true - predicted) / true)) * 100
+    return rmse, mae, mape
+
+def run_forecast(data, n_forecast=3):
+    methods = ['ARIMA', 'ETS', 'Prophet']
+    best_model = None
+    best_params = None
+    best_rmse = float('inf')
+    
+    # Create time series splits for cross-validation
+    tscv = TimeSeriesSplit(n_splits=5)
+    
+    # Store results for visualization later
+    forecast_results = {}
+
+    for train_index, test_index in tscv.split(data):
+        train, test = data.iloc[train_index], data.iloc[test_index]
+        
+        # Iterate through all methods
+        for method in methods:
+            if method == 'ARIMA':
+                # Try different ARIMA orders
+                p = d = q = range(0, 3)
+                pdq_combinations = list(itertools.product(p, d, q))
+                for param in pdq_combinations:
+                    try:
+                        model = ARIMA(train, order=param)
+                        model_fit = model.fit()
+                        predictions = model_fit.forecast(steps=len(test))
+                        rmse, mae, mape = evaluate_model(test, predictions)
+                        if rmse < best_rmse:
+                            best_rmse = rmse
+                            best_model = model_fit
+                            best_params = param
+                    except:
+                        continue
+
+            elif method == 'ETS':
+                trend_options = ['add', 'mul', None]
+                seasonal_options = ['add', 'mul', None]
+                for trend, seasonal in itertools.product(trend_options, seasonal_options):
+                    try:
+                        model = ExponentialSmoothing(train, trend=trend, seasonal=seasonal, seasonal_periods=12)
+                        model_fit = model.fit()
+                        predictions = model_fit.forecast(steps=len(test))
+                        rmse, mae, mape = evaluate_model(test, predictions)
+                        if rmse < best_rmse:
+                            best_rmse = rmse
+                            best_model = model_fit
+                            best_params = {'trend': trend, 'seasonal': seasonal}
+                    except:
+                        continue
+
+            elif method == 'Prophet':
+                prophet_train = pd.DataFrame({'ds': train.index, 'y': train.values})
+                model = Prophet()
+                model.fit(prophet_train)
+                future = model.make_future_dataframe(periods=len(test))
+                forecast = model.predict(future)
+                predictions = forecast['yhat'].iloc[-len(test):].values
+                rmse, mae, mape = evaluate_model(test.values, predictions)
+                if rmse < best_rmse:
+                    best_rmse = rmse
+                    best_model = model
+                    best_params = None
+
+    # Forecast for the next 3 months using the best model
+    if isinstance(best_model, ARIMA):
+        forecast = best_model.forecast(steps=n_forecast)
+    elif isinstance(best_model, ExponentialSmoothing):
+        forecast = best_model.forecast(steps=n_forecast)
+    elif isinstance(best_model, Prophet):
+        future = best_model.make_future_dataframe(periods=n_forecast)
+        forecast = best_model.predict(future)['yhat'].iloc[-n_forecast:].values
+    
+    # Visualization
+    plt.plot(data, label='Historical')
+    plt.plot(pd.date_range(data.index[-1], periods=n_forecast, freq='M'), forecast, label='Forecast', color='red')
+    plt.title('Forecast for Pre-Mature and Total Amount')
+    plt.legend()
+    plt.show()
+
+    return best_model, best_params, forecast
+
+# Assuming data is your DataFrame with date index and 'pre_mature_amount' and 'total_amount' columns
+# Example usage:
+# result = run_forecast(data['pre_mature_amount'], n_forecast=3)
