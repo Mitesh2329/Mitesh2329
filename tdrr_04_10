@@ -1,0 +1,116 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from sklearn.metrics import mean_squared_error
+
+# Step 1: Generate dummy data
+months = pd.date_range(start='2019-01', periods=60, freq='M')
+buckets = ['0/N', '1 to 2', '2 to 3', '3 to 4', '4 to 5', '5 to 6', '6 to 7', '7 to 8', '8 to 9', '9 to 10']
+
+# Create a dataframe to hold the total amount and pre-mature amount for each bucket
+data = []
+for bucket in buckets:
+    total_amt = np.random.randint(4_500_000, 5_500_000, size=60)
+    total_prer = np.random.randint(1_000_000, 2_500_000, size=60)
+    df = pd.DataFrame({
+        'Month': months,
+        'Bucket': bucket,
+        'Total_Amount': total_amt,
+        'Pre_Mature_Amount': total_prer
+    })
+    data.append(df)
+
+# Combine all bucket data into one DataFrame
+df_total = pd.concat(data)
+
+# Step 2: Data Cleaning (handling missing values or any anomalies)
+# In this case, since we generated data, there won't be missing values, but for general cleaning:
+df_total.fillna(method='ffill', inplace=True)
+
+# Step 3: Apply SARIMAX for forecasting
+def forecast_sarimax(data, forecast_steps=2):
+    forecast_df = pd.DataFrame()
+
+    for bucket in data['Bucket'].unique():
+        bucket_data = data[data['Bucket'] == bucket]
+        bucket_data.set_index('Month', inplace=True)
+
+        # Split data into training and test for validation (last 12 months for test)
+        train_data = bucket_data.iloc[:-12]
+        test_data = bucket_data.iloc[-12:]
+
+        # Fit SARIMAX model on 'Total_Amount'
+        model = SARIMAX(train_data['Total_Amount'], 
+                        order=(1, 1, 1), 
+                        seasonal_order=(1, 1, 1, 12),
+                        enforce_stationarity=False, 
+                        enforce_invertibility=False)
+        model_fit = model.fit(disp=False)
+
+        # Forecast for test data period
+        forecast_total = model_fit.get_forecast(steps=12).predicted_mean
+        mse_total = mean_squared_error(test_data['Total_Amount'], forecast_total)
+        print(f'Mean Squared Error for Total Amount ({bucket}):', mse_total)
+
+        # Forecast future data (for forecast_steps months)
+        future_total = model_fit.get_forecast(steps=forecast_steps).predicted_mean
+
+        # Repeat for 'Pre_Mature_Amount'
+        model_prer = SARIMAX(train_data['Pre_Mature_Amount'], 
+                             order=(1, 1, 1), 
+                             seasonal_order=(1, 1, 1, 12),
+                             enforce_stationarity=False, 
+                             enforce_invertibility=False)
+        model_prer_fit = model_prer.fit(disp=False)
+
+        # Forecast for test data period (for validation)
+        forecast_prer = model_prer_fit.get_forecast(steps=12).predicted_mean
+        mse_prer = mean_squared_error(test_data['Pre_Mature_Amount'], forecast_prer)
+        print(f'Mean Squared Error for Pre-Mature Amount ({bucket}):', mse_prer)
+
+        # Forecast future pre-mature amounts
+        future_prer = model_prer_fit.get_forecast(steps=forecast_steps).predicted_mean
+
+        # Prepare future months for forecast
+        future_months = pd.date_range(start=bucket_data.index[-1], periods=forecast_steps + 1, freq='M')[1:]
+        
+        # Combine forecasted results
+        forecast_data = pd.DataFrame({
+            'Month': future_months,
+            'Bucket': bucket,
+            'Forecast_Total_Amount': future_total,
+            'Forecast_Pre_Mature_Amount': future_prer
+        })
+
+        forecast_df = pd.concat([forecast_df, forecast_data])
+
+        # Plotting actual vs predicted for validation
+        plt.figure(figsize=(10, 6))
+        plt.plot(bucket_data.index, bucket_data['Total_Amount'], label='Actual Total Amount')
+        plt.plot(test_data.index, forecast_total, label='Predicted Total Amount (Validation)', color='orange')
+        plt.plot(future_months, future_total, label='Forecast Total Amount', color='green')
+        plt.title(f'Total Amount Forecast for {bucket}')
+        plt.xlabel('Month')
+        plt.ylabel('Total Amount')
+        plt.legend()
+        plt.show()
+
+        # Plot for Pre_Mature_Amount
+        plt.figure(figsize=(10, 6))
+        plt.plot(bucket_data.index, bucket_data['Pre_Mature_Amount'], label='Actual Pre-Mature Amount')
+        plt.plot(test_data.index, forecast_prer, label='Predicted Pre-Mature Amount (Validation)', color='orange')
+        plt.plot(future_months, future_prer, label='Forecast Pre-Mature Amount', color='green')
+        plt.title(f'Pre-Mature Amount Forecast for {bucket}')
+        plt.xlabel('Month')
+        plt.ylabel('Pre-Mature Amount')
+        plt.legend()
+        plt.show()
+
+    return forecast_df
+
+# Step 4: Forecast the next 2 months for each bucket
+forecast_df = forecast_sarimax(df_total, forecast_steps=2)
+
+# Display the forecasted results
+print(forecast_df)
