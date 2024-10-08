@@ -1,0 +1,33 @@
+import numpy as np
+import pandas as pd
+from scipy.stats import norm
+
+# Assuming df is your original dataframe
+df['Retail General_lag'] = np.log(df['Retail General'] / df['Retail General'].shift(1))
+df['Retail General Acc_lag'] = np.log(df['Retail General Acc'] / df['Retail General Acc'].shift(1))
+df['Retail General Unit Vol_lag'] = np.log(df['Retail General Unit Vol'] / df['Retail General Unit Vol'].shift(1))
+df['Retail Affluent_lag'] = np.log(df['Retail Affluent'] / df['Retail Affluent'].shift(1))
+
+# Step 1: Create a new dataframe df_1 with the desired columns
+df_1 = df[['Date', 'Retail General_lag', 'Retail General Acc_lag', 'Retail General Unit Vol_lag', 'Retail Affluent_lag']]
+
+# Step 2: Calculate the volatility (standard deviation) and add it as a row
+volatility = df_1[['Retail General_lag', 'Retail General Acc_lag', 'Retail General Unit Vol_lag', 'Retail Affluent_lag']].std()
+volatility_df = pd.DataFrame([volatility], columns=['Retail General_lag', 'Retail General Acc_lag', 'Retail General Unit Vol_lag', 'Retail Affluent_lag'])
+volatility_df['Date'] = 'Volatility'
+df_1 = pd.concat([df_1, volatility_df], ignore_index=True)
+
+# Step 3: Calculate point-in-time volume (sum of the 4 columns) and add it as a row
+point_in_time_volume = df[['Retail General', 'Retail General Acc', 'Retail General Unit Vol', 'Retail Affluent']].sum()
+point_in_time_df = pd.DataFrame([point_in_time_volume], columns=['Retail General', 'Retail General Acc', 'Retail General Unit Vol', 'Retail Affluent'])
+point_in_time_df['Date'] = 'Point-in-Time Volume'
+df_1 = pd.concat([df_1, point_in_time_df], ignore_index=True)
+
+# Step 4: Calculate GBM using the formula: GBM = exp(volatility * sqrt(12) * norm.ppf(0.05))
+gbm = np.exp(volatility * np.sqrt(12) * norm.ppf(0.05))  # Now using the calculated volatility directly
+gbm_df = pd.DataFrame([gbm], columns=['Retail General_lag', 'Retail General Acc_lag', 'Retail General Unit Vol_lag', 'Retail Affluent_lag'])
+gbm_df['Date'] = 'GBM'
+df_1 = pd.concat([df_1, gbm_df], ignore_index=True)
+
+# Step 5: Final dataframe with volatility, point-in-time volume, and GBM added
+print(df_1)
