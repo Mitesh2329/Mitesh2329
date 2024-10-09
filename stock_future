@@ -1,0 +1,118 @@
+import yfinance as yf
+import numpy as np
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import matplotlib.pyplot as plt
+from fbprophet import Prophet
+from sklearn.preprocessing import MinMaxScaler
+import plotly.graph_objects as go
+
+# Function to fetch historical price data
+def get_stock_data(symbol):
+    stock_data = yf.download(symbol, period="5y", interval="1d")
+    return stock_data
+
+# Function to perform news sentiment analysis
+def news_sentiment_analysis(stock):
+    url = f"https://www.google.com/search?q={stock}+stock+news"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.content, "html.parser")
+    
+    # Simplified sentiment analysis: based on keywords
+    positive_keywords = ['buy', 'strong', 'growth']
+    negative_keywords = ['sell', 'bearish', 'decline']
+    
+    headlines = [headline.get_text() for headline in soup.find_all('h3')]
+    sentiment_score = 0
+    for headline in headlines:
+        if any(word in headline.lower() for word in positive_keywords):
+            sentiment_score += 1
+        elif any(word in headline.lower() for word in negative_keywords):
+            sentiment_score -= 1
+    return sentiment_score
+
+# Function to predict future stock prices using Prophet
+def predict_future(stock_data):
+    df = stock_data.reset_index()[['Date', 'Close']]
+    df.columns = ['ds', 'y']
+
+    model = Prophet(daily_seasonality=True)
+    model.fit(df)
+
+    future = model.make_future_dataframe(periods=365)
+    forecast = model.predict(future)
+    
+    return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+
+# Monte Carlo Simulation for price projection (next 1 year)
+def monte_carlo_simulation(stock_data, simulations=1000):
+    returns = stock_data['Close'].pct_change().dropna()
+    mean = np.mean(returns)
+    std = np.std(returns)
+    
+    last_price = stock_data['Close'].iloc[-1]
+    simulation_df = pd.DataFrame()
+    
+    for x in range(simulations):
+        price_series = [last_price]
+        for y in range(365):
+            price = price_series[-1] * (1 + np.random.normal(mean, std))
+            price_series.append(price)
+        simulation_df[x] = price_series
+
+    return simulation_df
+
+# Visualization for predictions and Monte Carlo simulations
+def visualize_predictions(stock, forecast, monte_carlo_df):
+    plt.figure(figsize=(10, 6))
+
+    # Plot Prophet predictions
+    plt.plot(forecast['ds'], forecast['yhat'], label='Predicted Price')
+    plt.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], alpha=0.3, label='Prediction Range')
+
+    # Plot Monte Carlo simulation
+    for i in range(100):
+        plt.plot(monte_carlo_df[i], color='gray', alpha=0.1)
+
+    plt.title(f"Stock Price Prediction for {stock} - Next 1 Year")
+    plt.legend(loc='upper left')
+    plt.grid(True)
+    plt.show()
+
+# Putting it all together for each bank stock
+def analyze_stock(symbol, stock_name, budget=10000):
+    # Step 1: Get historical data
+    stock_data = get_stock_data(symbol)
+    
+    # Step 2: News sentiment analysis
+    sentiment_score = news_sentiment_analysis(stock_name)
+    print(f"Sentiment score for {stock_name}: {sentiment_score}")
+
+    # Step 3: Price prediction using Prophet
+    forecast = predict_future(stock_data)
+
+    # Step 4: Monte Carlo simulation
+    monte_carlo_df = monte_carlo_simulation(stock_data)
+
+    # Step 5: Visualization
+    visualize_predictions(stock_name, forecast, monte_carlo_df)
+    
+    # Tentative analysis for next year
+    predicted_max_price = forecast['yhat_upper'].max()
+    predicted_min_price = forecast['yhat_lower'].min()
+
+    print(f"Predicted max price for {stock_name}: {predicted_max_price:.2f} INR")
+    print(f"Predicted min price for {stock_name}: {predicted_min_price:.2f} INR")
+
+# Running analysis for each bank stock
+banks = {
+    'Federal Bank': 'FEDERALBNK.NS',
+    'ICICI Bank': 'ICICIBANK.NS',
+    'Axis Bank': 'AXISBANK.NS'
+}
+
+for bank, symbol in banks.items():
+    print(f"\nAnalyzing {bank}...\n")
+    analyze_stock(symbol, bank)
