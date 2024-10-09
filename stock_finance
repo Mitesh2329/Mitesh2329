@@ -1,0 +1,73 @@
+import yfinance as yf
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+
+# Function to implement trading strategy (JP Morgan-like strategy)
+def jp_morgan_strategy(symbol, budget):
+    # Fetch stock data for the past month
+    stock_data = yf.download(symbol, period="1mo", interval="1d")
+
+    # Calculate moving averages (SMA) for trend-following
+    stock_data['SMA_5'] = stock_data['Close'].rolling(window=5).mean()
+    stock_data['SMA_20'] = stock_data['Close'].rolling(window=20).mean()
+
+    # Mean-Reversion: Calculate Z-Score (price deviation from mean)
+    stock_data['Mean'] = stock_data['Close'].rolling(window=20).mean()
+    stock_data['Std'] = stock_data['Close'].rolling(window=20).std()
+    stock_data['Z-Score'] = (stock_data['Close'] - stock_data['Mean']) / stock_data['Std']
+
+    # Buy signal when Z-Score is below -1 (stock is undervalued)
+    stock_data['Buy_Signal'] = np.where(stock_data['Z-Score'] < -1, 1, 0)
+
+    # Sell signal when Z-Score is above 1 (stock is overvalued)
+    stock_data['Sell_Signal'] = np.where(stock_data['Z-Score'] > 1, -1, 0)
+
+    # Determine number of shares to buy with the budget
+    current_price = stock_data['Close'][-1]
+    shares_to_buy = budget // current_price
+
+    print(f"For {symbol}:")
+    print(f"Current Price: {current_price:.2f}")
+    print(f"Number of shares you can buy with {budget} INR: {shares_to_buy}")
+
+    # Visualization: Plot closing price, SMAs, and Buy/Sell signals
+    plt.figure(figsize=(14, 8))
+    plt.plot(stock_data['Close'], label='Closing Price', color='blue')
+    plt.plot(stock_data['SMA_5'], label='5-Day SMA', color='red', linestyle='--')
+    plt.plot(stock_data['SMA_20'], label='20-Day SMA', color='green', linestyle='--')
+    plt.scatter(stock_data.index, stock_data['Buy_Signal'] * stock_data['Close'], label='Buy Signal', marker='^', color='green')
+    plt.scatter(stock_data.index, stock_data['Sell_Signal'] * stock_data['Close'], label='Sell Signal', marker='v', color='red')
+    plt.title(f'{symbol} Stock Price and Signals')
+    plt.legend(loc='upper left')
+    plt.grid(True)
+    plt.show()
+
+    # Candlestick chart for more detailed analysis
+    fig = go.Figure(data=[go.Candlestick(x=stock_data.index,
+                                         open=stock_data['Open'],
+                                         high=stock_data['High'],
+                                         low=stock_data['Low'],
+                                         close=stock_data['Close'])])
+    fig.update_layout(title=f'{symbol} Candlestick Chart',
+                      xaxis_title='Date',
+                      yaxis_title='Price (INR)')
+    fig.show()
+
+    return stock_data, shares_to_buy
+
+# Define stock symbols for NSE
+stocks = {
+    'Federal Bank': 'FEDERALBNK.NS',
+    'ICICI Bank': 'ICICIBANK.NS',
+    'Axis Bank': 'AXISBANK.NS'
+}
+
+# Define the investment budget
+budget = 10000  # INR
+
+# Analyze each stock using the modified JP Morgan strategy
+for bank, symbol in stocks.items():
+    print(f"Analyzing {bank}...")
+    stock_data, shares = jp_morgan_strategy(symbol, budget)
