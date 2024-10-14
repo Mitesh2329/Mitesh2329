@@ -1,0 +1,47 @@
+Slide 1: Features - Log-Normal Distribution and Decay Analysis for NMDs
+
+Key Modeling Features:
+
+1. Log-Normal Distribution
+
+Used to model balance fluctuations of non-maturing deposits (NMDs), accurately reflecting their non-symmetric nature and volatility patterns.
+
+
+
+2. Decay Analysis for NMDs
+
+Applied a decay function to assess how deposits gradually diminish over time, key for identifying stable and volatile portions in liquidity management.
+
+
+
+3. Weighted Average Method for TDRR and CPR
+
+A weighted average approach was adopted for TDRR and CPR, ensuring precise runoff behavior, validated against client-specific needs and market conditions.
+
+
+
+
+This flexible model offers precise insights into liquidity risk and can be tailored for different deposit portfolios.
+
+
+---
+
+Slide 2: Functionality - PL/SQL Implementation
+
+PL/SQL Execution:
+
+1. Joins and Subqueries
+
+Used to effectively combine data across multiple tables, ensuring data accuracy and efficient computation of key metrics.
+
+
+
+2. Custom Functions and Procedures
+
+Developed functions and procedures to compute log-normal distribution, decay rates, TDRR, and CPR, ensuring modularity and performance.
+
+
+
+
+The approach was fully integrated into existing systems, providing a scalable and efficient solution.
+
