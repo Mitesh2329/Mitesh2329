@@ -1,0 +1,50 @@
+import yfinance as yf
+import pandas as pd
+
+# Define a list of Indian index tickers to get a diverse set of stocks across sectors
+index_tickers = ["^NSEI"]  # NIFTY50 index (NSE, India) as a sample
+
+# Set up a list to store filtered stocks
+filtered_stocks = []
+
+# Retrieve components of each index
+for index in index_tickers:
+    index_ticker = yf.Ticker(index)
+    constituents = index_ticker.tickers  # Fetch tickers in the index (if available)
+
+    # Loop through each constituent stock ticker
+    for ticker_symbol in constituents:
+        try:
+            stock = yf.Ticker(ticker_symbol)
+            info = stock.info  # Get stock information
+
+            # Extract necessary fields
+            market_cap = info.get("marketCap", 0)
+            pe_ratio = info.get("trailingPE", None)
+            industry_pe = info.get("forwardPE", None)  # Industry PE can be proxied by forward PE if unavailable
+            plumstead_value = info.get("priceToBook", None)  # Using P/B as a proxy for Plumstead
+
+            # Apply filters
+            if market_cap and 10e7 <= market_cap <= 100e7:  # Market cap between 10-100 crore
+                if pe_ratio and pe_ratio < 20:
+                    if industry_pe and pe_ratio < industry_pe:
+                        if plumstead_value and plumstead_value < 0.7:  # P/B as proxy for Plumstead value
+                            # Append stock info if criteria are met
+                            filtered_stocks.append({
+                                'Ticker': ticker_symbol,
+                                'Market Cap': market_cap,
+                                'P/E Ratio': pe_ratio,
+                                'Industry P/E': industry_pe,
+                                'Plumstead Value (P/B)': plumstead_value,
+                                'Sector': info.get('sector', 'Unknown')  # Retrieve sector information
+                            })
+
+        except Exception as e:
+            print(f"Error processing {ticker_symbol}: {e}")  # Handle errors (e.g., missing data)
+
+# Convert to DataFrame for readability and display the best undervalued stocks
+filtered_df = pd.DataFrame(filtered_stocks)
+
+# Sort by P/E ratio or other metric to identify "best" undervalued stocks
+best_stocks = filtered_df.sort_values(by='P/E Ratio').head(10)  # Top 10 undervalued stocks
+print(best_stocks)
