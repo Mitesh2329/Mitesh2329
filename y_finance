@@ -13,26 +13,28 @@ for ticker_symbol in tickers:
         stock = yf.Ticker(ticker_symbol)
         info = stock.info  # Get stock information
 
-        # Extract necessary fields
+        # Extract necessary fields with default values if not found
         market_cap = info.get("marketCap", 0)
         pe_ratio = info.get("trailingPE", None)
-        industry_pe = info.get("forwardPE", None)  # Forward P/E as a proxy for industry P/E
-        plumstead_value = info.get("priceToBook", None)  # Using P/B as a proxy for Plumstead value
+        industry_pe = info.get("forwardPE", None)  # Use forward P/E if available
+        plumstead_value = info.get("priceToBook", None)  # P/B ratio as a proxy for Plumstead
 
-        # Apply filters
-        if market_cap and 10e7 <= market_cap <= 100e7:  # Market cap between 10-100 crore
-            if pe_ratio and pe_ratio < 20:
-                if industry_pe and pe_ratio < industry_pe:
-                    if plumstead_value and plumstead_value < 0.7:  # P/B as proxy for Plumstead value
-                        # Append stock info if criteria are met
-                        filtered_stocks.append({
-                            'Ticker': ticker_symbol,
-                            'Market Cap': market_cap,
-                            'P/E Ratio': pe_ratio,
-                            'Industry P/E': industry_pe,
-                            'Plumstead Value (P/B)': plumstead_value,
-                            'Sector': info.get('sector', 'Unknown')  # Retrieve sector information
-                        })
+        # Apply filters, ensuring none of the values are None
+        if (
+            market_cap and 10e7 <= market_cap <= 100e7 and  # Market cap between 10-100 crore
+            pe_ratio is not None and pe_ratio < 20 and      # P/E ratio < 20
+            industry_pe is not None and pe_ratio < industry_pe and  # P/E < industry P/E
+            plumstead_value is not None and plumstead_value < 0.7   # P/B ratio < 0.7
+        ):
+            # Append stock info if criteria are met
+            filtered_stocks.append({
+                'Ticker': ticker_symbol,
+                'Market Cap': market_cap,
+                'P/E Ratio': pe_ratio,
+                'Industry P/E': industry_pe,
+                'Plumstead Value (P/B)': plumstead_value,
+                'Sector': info.get('sector', 'Unknown')  # Retrieve sector information
+            })
 
     except Exception as e:
         print(f"Error processing {ticker_symbol}: {e}")  # Handle errors (e.g., missing data)
