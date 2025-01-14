@@ -1,0 +1,355 @@
+CREDIT RISK AND IFRS9
+
+1. What are the key assumptions of regression?
+
+Answer:
+
+Linearity: A linear relationship exists between independent (X) and dependent (Y) variables.
+
+Homoscedasticity: The variance of residuals is constant across all values of X.
+
+Normality of Residuals: Residuals follow a normal distribution.
+
+No Multicollinearity: Independent variables are not highly correlated with each other.
+
+Independence of Errors: Residuals are independent and uncorrelated.
+
+
+
+---
+
+2. Can a polynomial regression model be made linear? If yes, how?
+
+Answer:
+Yes, a polynomial regression model can be transformed into a linear one by redefining variables. For example, in , redefine , which converts it to , making it linear in terms of parameters.
+
+
+---
+
+3. How do we check homoscedasticity in regression?
+
+Answer:
+
+Use visual inspections, such as plotting residuals vs. predicted values.
+
+Perform statistical tests like the Breusch-Pagan test or White's test.
+
+If residuals show a funnel shape or a pattern, it indicates heteroscedasticity.
+
+
+
+---
+
+4. What is multicollinearity, and why should it be corrected?
+
+Answer:
+
+Definition: Multicollinearity occurs when independent variables are highly correlated, leading to instability in coefficient estimates.
+
+Reason to correct: It makes the model's interpretation difficult and inflates standard errors, reducing statistical significance.
+
+
+
+---
+
+5. How do we detect multicollinearity in a model?
+
+Answer:
+
+Variance Inflation Factor (VIF): If , multicollinearity exists.
+
+Correlation Matrix: Check if correlation between independent variables exceeds 0.8 or 0.9.
+
+Eigenvalues and Condition Number: Very small eigenvalues or a high condition number (>30) suggest multicollinearity.
+
+
+
+---
+
+6. When regressing macroeconomic factors (MEF), should raw variables be used or transformations applied?
+
+Answer:
+
+Raw variables may not always be suitable, as MEFs often exhibit trends or seasonality.
+
+Perform stationarity tests (ADF test, KPSS test) to check if variables are stationary.
+
+Apply transformations (e.g., differencing, log transformations) if variables are non-stationary.
+
+
+
+---
+
+7. What is the difference between R-squared and Adjusted R-squared?
+
+Answer:
+
+R-squared: Measures the proportion of variance in the dependent variable explained by independent variables.
+
+Adjusted R-squared: Adjusts R-squared for the number of predictors, penalizing the inclusion of irrelevant variables.
+
+Key Difference: Adjusted R-squared is more reliable for models with multiple predictors.
+
+
+
+---
+
+8. What is a p-value, and how do we interpret it?
+
+Answer:
+
+Definition: The p-value indicates the probability of observing results as extreme as the current one, assuming the null hypothesis is true.
+
+Interpretation:
+
+: Reject the null hypothesis (statistically significant).
+
+: Fail to reject the null hypothesis (not statistically significant).
+
+
+
+
+---
+
+9. Explain Type I and Type II errors.
+
+Answer:
+
+Type I Error: Incorrectly rejecting a true null hypothesis (false positive).
+
+Type II Error: Failing to reject a false null hypothesis (false negative).
+
+Example: In credit risk, classifying a good account as risky is Type I, while missing a risky account is Type II.
+
+
+
+---
+
+10. What is an ROC curve, and how is it used?
+
+Answer:
+
+Definition: The Receiver Operating Characteristic (ROC) curve plots the True Positive Rate (TPR) against the False Positive Rate (FPR) at various thresholds.
+
+Use: It evaluates the predictive accuracy of a model. The Area Under the Curve (AUC) quantifies model performance (higher AUC = better model).
+
+
+
+---
+
+11. If two ROC curves have different AUC values, which model should we choose?
+
+Answer:
+Choose the model with the higher AUC, as it indicates better discriminatory power to distinguish between classes (e.g., default vs. non-default).
+
+
+---
+
+12. What are the staging criteria for IFRS9?
+
+Answer:
+
+Stage 1: Accounts with no significant increase in credit risk (12-month ECL).
+
+Stage 2: Accounts with a significant increase in credit risk (lifetime ECL).
+
+Stage 3: Defaulted accounts (credit-impaired; lifetime ECL).
+
+
+
+---
+
+13. How do we define "lifetime" in IFRS9?
+
+Answer:
+Lifetime is defined as the expected remaining duration of a financial instrument until it is fully repaid, written off, or matures, considering prepayments or extensions.
+
+
+---
+
+14. What is the loss calculation horizon for IFRS9?
+
+Answer:
+
+For Stage 1: Expected Credit Loss (ECL) is calculated over the next 12 months.
+
+For Stage 2 and 3: ECL is calculated over the remaining lifetime of the asset.
+
+
+
+---
+
+PYTHON MODELING
+
+1. How do we create a DataFrame using a list and dictionary in Python?
+
+Answer:
+
+Using a list:
+
+import pandas as pd
+data = [1, 2, 3, 4]
+df = pd.DataFrame(data, columns=['Column1'])
+
+Using a dictionary:
+
+data = {'Column1': [1, 2, 3], 'Column2': [4, 5, 6]}
+df = pd.DataFrame(data)
+
+
+
+---
+
+2. What is the difference between mutable and immutable data types in Python?
+
+Answer:
+
+Mutable: Data that can be changed after creation (e.g., list, dict, set).
+
+Immutable: Data that cannot be changed after creation (e.g., tuple, str, int).
+
+
+
+---
+
+3. How do we test for stationarity in a time series?
+
+Answer:
+
+Use the Augmented Dickey-Fuller (ADF) test or KPSS test.
+
+Check the p-value:
+
+: Stationary.
+
+: Non-stationary (requires transformation).
+
+
+
+
+---
+
+4. What is the syntax to define a function in Python?
+
+Answer:
+
+def function_name(parameters):
+    # Function body
+    return value
+
+Example:
+
+def add_numbers(a, b):
+    return a + b
+
+
+---
+
+IRB (Internal Ratings-Based Approach)
+
+1. What is the concept of RWA in IRB?
+
+Answer:
+Risk-Weighted Assets (RWA) are used to measure a bank's credit, market, and operational risk exposure. Under IRB, banks estimate RWA by using internal models to calculate risk parameters such as Probability of Default (PD), Loss Given Default (LGD), and Exposure at Default (EAD).
+
+
+---
+
+2. Key requirements for using the IRB approach?
+
+Answer:
+
+Regulatory Approval: Banks need prior approval from regulators to use IRB.
+
+Data Quality: High-quality, historical data on credit risk.
+
+Validation: Models must be independently validated regularly.
+
+Risk Governance: Strong governance to ensure model accuracy and compliance.
+
+
+
+---
+
+3. How does IRB improve risk management?
+
+Answer:
+IRB allows banks to align capital requirements with their actual risk exposure, leading to more accurate risk assessments and efficient capital allocation.
+
+
+---
+
+SVB (Silicon Valley Bank Collapse)
+
+4. What caused the SVB collapse?
+
+Answer:
+
+Asset-Liability Mismatch: SVB invested heavily in long-term government bonds, which lost value due to rising interest rates.
+
+Liquidity Crisis: Depositors withdrew funds rapidly, leading to a liquidity shortfall.
+
+Risk Mismanagement: Lack of robust Interest Rate Risk in the Banking Book (IRRBB) management and poor hedging strategies exacerbated the issue.
+
+
+
+---
+
+5. What risks were highlighted by the SVB collapse?
+
+Answer:
+
+Liquidity Risk: Inadequate liquidity buffers to meet sudden outflows.
+
+IRRBB Risk: Poor management of interest rate sensitivity in the banking book.
+
+Concentration Risk: Heavy reliance on a concentrated depositor base (start-ups and tech companies).
+
+
+
+---
+
+IRRBB (Interest Rate Risk in the Banking Book)
+
+6. What is IRRBB?
+
+Answer:
+IRRBB refers to the risk of losses arising from changes in interest rates that affect a bank's banking book positions.
+
+
+---
+
+7. How is IRRBB managed?
+
+Answer:
+
+Measurement Techniques:
+
+Gap analysis to assess repricing mismatches.
+
+Duration analysis to measure sensitivity of assets and liabilities to interest rates.
+
+Economic Value of Equity (EVE) and Net Interest Income (NII) simulations.
+
+
+Mitigation Strategies:
+
+Hedging using derivatives (e.g., interest rate swaps).
+
+Diversifying asset and liability maturities.
+
+
+
+
+---
+
+8. Why is IRRBB critical post-SVB collapse?
+
+Answer:
+The SVB collapse highlighted the importance of managing interest rate sensitivity in the banking book. Rising interest rates can cause significant losses on long-term fixed-income investments, which underscores the need for effective IRRBB frameworks.
+
+
+---
+
+Let me know if you'd like me to expand further or if you have additional questions!
+
